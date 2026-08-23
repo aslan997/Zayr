@@ -1,0 +1,28 @@
+[gd_scene load_steps=5 format=3]
+
+[ext_resource type="Script" path="res://scripts/player/PlayerController.gd" id="1_ctrl"]
+[ext_resource type="Script" path="res://scripts/player/PlayerMovement.gd" id="2_move"]
+[ext_resource type="Script" path="res://scripts/systems/CameraController.gd" id="3_cam"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_body"]
+size = Vector2(28, 46)
+
+[node name="Player" type="CharacterBody2D"]
+collision_layer = 2
+collision_mask = 1
+script = ExtResource("1_ctrl")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+position = Vector2(0, -23)
+shape = SubResource("RectangleShape2D_body")
+
+[node name="Visual" type="Polygon2D" parent="."]
+color = Color(0.55, 0.75, 0.95, 1)
+polygon = PackedVector2Array(-14, -46, 14, -46, 14, 0, -14, 0)
+
+[node name="Movement" type="Node" parent="."]
+script = ExtResource("2_move")
+
+[node name="Camera2D" type="Camera2D" parent="."]
+position_smoothing_speed = 8.0
+script = ExtResource("3_cam")

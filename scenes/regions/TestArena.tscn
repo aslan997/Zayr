@@ -1,0 +1,127 @@
+[gd_scene load_steps=8 format=3]
+
+[ext_resource type="PackedScene" path="res://scenes/player/Player.tscn" id="1_player"]
+
+[sub_resource type="RectangleShape2D" id="Shape_FloorA"]
+size = Vector2(560, 40)
+
+[sub_resource type="RectangleShape2D" id="Shape_FloorB"]
+size = Vector2(1180, 40)
+
+[sub_resource type="RectangleShape2D" id="Shape_Step"]
+size = Vector2(160, 24)
+
+[sub_resource type="RectangleShape2D" id="Shape_Wall"]
+size = Vector2(40, 240)
+
+[sub_resource type="RectangleShape2D" id="Shape_Ledge"]
+size = Vector2(160, 24)
+
+[node name="TestArena" type="Node2D"]
+
+[node name="Player" parent="." instance=ExtResource("1_player")]
+position = Vector2(80, 568)
+
+[node name="Camera2D" parent="Player"]
+limit_left = -50
+limit_top = -100
+limit_right = 2080
+limit_bottom = 650
+
+[node name="Geometry" type="Node2D" parent="."]
+
+[node name="FloorA" type="StaticBody2D" parent="Geometry"]
+position = Vector2(280, 588)
+collision_layer = 1
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Geometry/FloorA"]
+shape = SubResource("Shape_FloorA")
+
+[node name="Visual" type="Polygon2D" parent="Geometry/FloorA"]
+color = Color(0.35, 0.35, 0.4, 1)
+polygon = PackedVector2Array(-280, -20, 280, -20, 280, 20, -280, 20)
+
+[node name="FloorB" type="StaticBody2D" parent="Geometry"]
+position = Vector2(1310, 588)
+collision_layer = 1
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Geometry/FloorB"]
+shape = SubResource("Shape_FloorB")
+
+[node name="Visual" type="Polygon2D" parent="Geometry/FloorB"]
+color = Color(0.35, 0.35, 0.4, 1)
+polygon = PackedVector2Array(-590, -20, 590, -20, 590, 20, -590, 20)
+
+[node name="Platform1" type="StaticBody2D" parent="Geometry"]
+position = Vector2(1130, 500)
+collision_layer = 1
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Geometry/Platform1"]
+shape = SubResource("Shape_Step")
+
+[node name="Visual" type="Polygon2D" parent="Geometry/Platform1"]
+color = Color(0.5, 0.55, 0.65, 1)
+polygon = PackedVector2Array(-80, -12, 80, -12, 80, 12, -80, 12)
+
+[node name="Platform2" type="StaticBody2D" parent="Geometry"]
+position = Vector2(1340, 420)
+collision_layer = 1
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Geometry/Platform2"]
+shape = SubResource("Shape_Step")
+
+[node name="Visual" type="Polygon2D" parent="Geometry/Platform2"]
+color = Color(0.5, 0.55, 0.65, 1)
+polygon = PackedVector2Array(-80, -12, 80, -12, 80, 12, -80, 12)
+
+[node name="Platform3" type="StaticBody2D" parent="Geometry"]
+position = Vector2(1550, 340)
+collision_layer = 1
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Geometry/Platform3"]
+shape = SubResource("Shape_Step")
+
+[node name="Visual" type="Polygon2D" parent="Geometry/Platform3"]
+color = Color(0.5, 0.55, 0.65, 1)
+polygon = PackedVector2Array(-80, -12, 80, -12, 80, 12, -80, 12)
+
+[node name="WallLeft" type="StaticBody2D" parent="Geometry"]
+position = Vector2(1700, 448)
+collision_layer = 1
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Geometry/WallLeft"]
+shape = SubResource("Shape_Wall")
+
+[node name="Visual" type="Polygon2D" parent="Geometry/WallLeft"]
+color = Color(0.85, 0.55, 0.25, 1)
+polygon = PackedVector2Array(-20, -120, 20, -120, 20, 120, -20, 120)
+
+[node name="WallRight" type="StaticBody2D" parent="Geometry"]
+position = Vector2(1850, 448)
+collision_layer = 1
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Geometry/WallRight"]
+shape = SubResource("Shape_Wall")
+
+[node name="Visual" type="Polygon2D" parent="Geometry/WallRight"]
+color = Color(0.85, 0.55, 0.25, 1)
+polygon = PackedVector2Array(-20, -120, 20, -120, 20, 120, -20, 120)
+
+[node name="LedgeEnd" type="StaticBody2D" parent="Geometry"]
+position = Vector2(1950, 340)
+collision_layer = 1
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Geometry/LedgeEnd"]
+shape = SubResource("Shape_Ledge")
+
+[node name="Visual" type="Polygon2D" parent="Geometry/LedgeEnd"]
+color = Color(0.5, 0.55, 0.65, 1)
+polygon = PackedVector2Array(-80, -12, 80, -12, 80, 12, -80, 12)
