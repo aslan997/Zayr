@@ -28,6 +28,8 @@ signal phase2_started
 @export var melee_recovery: float = 0.25
 @export var melee_cooldown: float = 0.5
 @export var melee_damage: float = 14.0
+## Not from a design brief - placeholder, tunable.
+@export var melee_stability_damage: float = 10.0
 @export var melee_hit_offset: float = 30.0
 
 @export_group("Ranged Attack")
@@ -35,6 +37,8 @@ signal phase2_started
 @export var ranged_windup: float = 0.4
 @export var ranged_cooldown: float = 1.0
 @export var ranged_damage: float = 10.0
+## Not from a design brief - placeholder, tunable.
+@export var ranged_stability_damage: float = 6.0
 @export var projectile_speed: float = 240.0
 @export var muzzle_offset: Vector2 = Vector2(30.0, -30.0)
 
@@ -99,6 +103,7 @@ func _start_attack(kind: AttackKind) -> void:
 		hitbox.position.x = melee_hit_offset * facing
 		hitbox.scale.x = facing
 		hitbox.damage = melee_damage
+		hitbox.stability_damage = melee_stability_damage
 		swing_visual.visible = true
 
 
@@ -133,6 +138,7 @@ func _fire_projectile() -> void:
 	proj.direction = facing
 	proj.speed = projectile_speed
 	proj.damage = ranged_damage
+	proj.stability_damage = ranged_stability_damage
 	proj.activate()
 
 
@@ -142,3 +148,12 @@ func _find_player_if_needed() -> void:
 	var players: Array = body.get_tree().get_nodes_in_group("player")
 	if players.size() > 0:
 		_player = players[0]
+
+
+func cancel_attack() -> void:
+	if not is_attacking:
+		return
+	is_attacking = false
+	if _attack_kind == AttackKind.MELEE:
+		hitbox.deactivate()
+		swing_visual.visible = false

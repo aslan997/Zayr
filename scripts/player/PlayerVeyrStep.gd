@@ -143,7 +143,7 @@ func _do_step(aim_x: float, aim_y: float) -> void:
 	_perfect_detection_timer = perfect_detection_window
 	_perfect_triggered_this_step = false
 	_perfect_burst_bonus = 1.0
-	health.is_invulnerable = true
+	health.add_invulnerability()
 	visual.visible = false
 
 	trail.clear_points()
@@ -164,7 +164,7 @@ func _do_step(aim_x: float, aim_y: float) -> void:
 
 func _end_step() -> void:
 	is_stepping = false
-	health.is_invulnerable = false
+	health.remove_invulnerability()
 	visual.visible = true
 	trail.modulate.a = 0.0
 	depart_burst.visible = false

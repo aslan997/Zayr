@@ -72,11 +72,18 @@ additional sibling components without `PlayerController.gd` or
 `PlayerMovement.gd` growing to absorb their responsibilities. `HealthComponent`,
 `VeyrComponent`, and a `Hurtbox` (all in `scripts/combat/`, reusable beyond
 the player) are attached this way, and **`PlayerCombat.gd`** (Zayr's Veyr
-Edge combo) and **`PlayerVeyrStep.gd`** (his evasive blink) both follow the
-same `physics_update()`-called-from-controller pattern as
-`PlayerMovement.gd` — see [COMBAT.md](COMBAT.md) §6–7. `PlayerAbilities.gd`
-doesn't exist as a separate file; Veyr Step lives directly in its own
-component instead, consistent with how combat already works.
+Edge combo **and** heavy attack — see below) and **`PlayerVeyrStep.gd`**
+(his evasive blink) both follow the same `physics_update()`-called-from-
+controller pattern as `PlayerMovement.gd` — see [COMBAT.md](COMBAT.md)
+§6–8. `PlayerAbilities.gd` doesn't exist as a separate file; Veyr Step
+lives directly in its own component instead, consistent with how combat
+already works.
+
+The heavy attack lives inside `PlayerCombat.gd` rather than a separate
+component: it reuses the same `Hitbox`/`SwingVisual` as the combo and
+needs mutual-exclusion state with it (can't start one while the other is
+active), which a separate component would have had to reach across a
+component boundary for on every shared action.
 
 ### State Machine
 
@@ -84,19 +91,18 @@ component instead, consistent with how combat already works.
 states needed so far are implemented:
 
 ```
-IDLE, RUN, JUMP, FALL, WALL_SLIDE, DASH, AIR_DASH, ATTACK_1, ATTACK_2, ATTACK_3, VEYR_STEP, DEAD
+IDLE, RUN, JUMP, FALL, WALL_SLIDE, DASH, AIR_DASH, ATTACK_1, ATTACK_2, ATTACK_3, ATTACK_HEAVY, VEYR_STEP, HURT, DEAD
 ```
 
-The remaining eventual states (`HEAVY_ATTACK, CHARGING, HURT, EMBER, VEIL`)
-are **not** implemented yet. `DEAD` exists but is prototype-minimal: no
-animation, just a freeze + timed respawn (see §3.2) — there's no `HURT`
-state; i-frames now exist (via `HealthComponent.is_invulnerable`, granted
-by Veyr Step — see [COMBAT.md](COMBAT.md) §7) but no knockback/stagger
-design does yet, so there's nothing to build a dedicated `HURT` state
-from. States are derived from movement/combat/step output each physics
-frame — the enum can be extended without restructuring the controller,
-since transitions are just a `match` on current velocity/contact/ability
-state.
+The remaining eventual states (`CHARGING, EMBER, VEIL`) are **not**
+implemented yet. `DEAD` and `HURT` are both prototype-minimal: no
+animation, just a freeze (`DEAD`: timed respawn, see §3.2; `HURT`: a
+knockback velocity impulse + timed control return, see §3.3). States are
+derived from movement/combat/step output each physics frame — the enum
+can be extended without restructuring the controller, since transitions
+are just a `match` on current velocity/contact/ability state (`HURT` and
+`DEAD` bypass that `match` entirely via an early return, same pattern for
+both).
 
 ### Dash / Air Dash
 
@@ -129,6 +135,12 @@ its owner's `HealthComponent.is_invulnerable` is true — a generic fact
 about the Hurtbox, not tied to any one invulnerability source. Perfect
 Step ([COMBAT.md](COMBAT.md) §7.1) is what currently listens for it.
 
+`Hitbox` also carries a `stability_damage` field (0 by default) and
+`Hurtbox` an optional `stability_component_path` — see
+[COMBAT.md](COMBAT.md) §9's `StabilityComponent` — following the same
+generic-primitive, specific-behavior-lives-elsewhere pattern as
+`hit_avoided`.
+
 ### 3.2 Death / Respawn
 
 No save system or game-over flow exists (out of scope — see §9), so
@@ -141,20 +153,46 @@ that keeps a combat prototype testable: freeze input for
 is the entire point of reviving. No animation, no game-over screen, no
 persistence across scene reloads.
 
+### 3.3 HURT State
+
+On the player's own `Hurtbox.hit_received` (filtered to hits that
+actually landed — not dead, not already hurt, not invulnerable),
+`PlayerController` enters `HURT`: a one-time knockback velocity impulse,
+`PlayerMovement.cancel_dash()`/`PlayerCombat.cancel_attack()`, then input
+is fully inert (an early return before any input is read, applying only
+gravity + `move_and_slide()` directly) for `hurt_duration`, after which
+normal control resumes. See [COMBAT.md](COMBAT.md) §10 for the full
+design and a real bug this surfaced (post-hit invulnerability racing
+against the triggering hit's own damage application, fixed with
+`call_deferred()`).
+
+`HealthComponent.is_invulnerable` is now reference-counted
+(`add_invulnerability()`/`remove_invulnerability()`) rather than a plain
+bool, specifically so `HURT`'s optional post-hit grace window can't
+prematurely cancel Veyr Step's own invulnerability (or vice versa) when
+both happen to be active — see [COMBAT.md](COMBAT.md) §10 for why this
+was necessary rather than incidental scope creep.
+
 ## 4. Enemy Architecture
 
 Mirrors the player's Controller/component split, and is shared across
 every enemy variant via a common AI interface:
 
 - **`scripts/enemies/EnemyAIBase.gd`** — the contract `EnemyController`
-  programs against: `facing`, `move_velocity_x`, `is_attacking`, and
-  `physics_update()`. `EnemyController` never references a concrete AI
-  class, so adding a new enemy variant never requires changing it.
+  programs against: `facing`, `move_velocity_x`, `is_attacking`,
+  `physics_update()`, and `cancel_attack()` (a no-op base — each concrete
+  AI overrides it to clean up its own attack state; see
+  [COMBAT.md](COMBAT.md) §9). `EnemyController` never references a
+  concrete AI class, so adding a new enemy variant never requires
+  changing it.
 - **`scripts/enemies/EnemyController.gd`** — root controller for every
   enemy. Applies gravity, takes `ai.move_velocity_x`, calls
-  `move_and_slide()`, and owns hit-flash / attacking-tint / death-fade
-  feedback generically (on `HealthComponent.died`: fade out, then
-  `queue_free()`).
+  `move_and_slide()`, and owns hit-flash / attacking-tint / stagger-tint /
+  death-fade feedback generically (on `HealthComponent.died`: fade out,
+  then `queue_free()`). Also owns the `StabilityComponent` integration —
+  see [COMBAT.md](COMBAT.md) §9: while staggered, it simply doesn't call
+  `ai.physics_update()` at all that frame, so no per-AI-script
+  stagger-awareness code is needed anywhere.
 - **`scenes/enemies/Enemy.tscn`** + **`scripts/enemies/EnemyAI.gd`** —
   the melee variant. `CharacterBody2D` root (same layout conventions as
   `Player.tscn`: origin at feet, `HealthComponent`, `Hurtbox`, plus a
@@ -185,12 +223,15 @@ every enemy variant via a common AI interface:
 - No chase leash/return-to-post on the melee enemy — a player could in
   principle nudge it away from its patrol zone by repeatedly stepping
   just inside then outside `detection_range`.
-- `Projectile` doesn't collide with world geometry — it passes through
-  walls/floors rather than stopping at them, just expires after
-  `lifetime`. Fine for the current arena's clear sightlines, would need
-  addressing before placing a ranged enemy behind cover.
 - The ranged enemy is stationary — no kiting/repositioning to keep its
   distance if the player closes in.
+- Every enemy now has a `StabilityComponent` and can be staggered — see
+  [COMBAT.md](COMBAT.md) §9 for what that does and doesn't cover yet
+  (single stagger tier, no Perfect Step interaction, freezes movement as
+  well as attacks — flagged there as worth reviewing).
+- `Projectile` now stops at world geometry instead of passing through it
+  — see [COMBAT.md](COMBAT.md) §11 for the fix and the `monitorable`
+  engine quirk it uncovered.
 
 ### 4.1 Mini-Boss
 
@@ -267,6 +308,7 @@ concern):
 - `aim_up` — W / Up Arrow
 - `aim_down` — S / Down Arrow
 - `veyr_step` — K
+- `heavy_attack` — L
 
 `aim_up`/`aim_down` are purely directional-intent inputs for aiming Veyr
 Step (see [COMBAT.md](COMBAT.md) §7) — there's no crouch/look-up, so W/S
@@ -306,8 +348,7 @@ the 8-directional input Veyr Step reads.
   triggering the death/respawn flow above.
 - Two enemy variants exist (melee, ranged) plus one mini-boss. See §4/
   §4.1 for their specific known limitations (ledge detection, chase
-  leash, projectile/world collision, ranged-enemy kiting, boss
-  single-phase-2-only).
+  leash, ranged-enemy kiting, boss single-phase-2-only).
 - Veyr Step's diagonal-direction math and wall-clamp were
   headless-validated but hit test-harness timing flakiness on the
   multi-key-combo cases specifically (not the core teleport/
@@ -316,3 +357,13 @@ the 8-directional input Veyr Step reads.
   stepping straight at a wall. Perfect Step ([COMBAT.md](COMBAT.md) §7.1)
   is implemented and headless-validated cleanly, including the negative
   case (no false trigger with nothing to avoid).
+- No player HURT-state knockback decay (fixed-velocity slide for the
+  whole `hurt_duration`, not an impulse-with-drag system), and no
+  hitstop on the player taking a hit (only on Zayr's own attacks) — see
+  [COMBAT.md](COMBAT.md) §10.
+- An undocumented-seeming Godot 4.7 `Area2D` behavior was found while
+  fixing projectile world collision: `monitorable = false` blocks
+  `body_entered` entirely, not just detection-by-other-areas as the
+  property name suggests. Worth remembering if any future `Area2D`
+  needs to detect a `PhysicsBody2D` and mysteriously doesn't — see
+  [COMBAT.md](COMBAT.md) §11.

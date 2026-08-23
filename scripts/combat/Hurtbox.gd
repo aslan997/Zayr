@@ -14,6 +14,10 @@ signal hit_received(damage: float, hitbox: Hitbox)
 signal hit_avoided(damage: float, hitbox: Hitbox)
 
 @export var health_component_path: NodePath
+## Optional - only entities with a StabilityComponent (enemies/bosses, not
+## the player) need to set this. Leave unset for a Hurtbox with no
+## stability interaction.
+@export var stability_component_path: NodePath
 
 ## The entity this Hurtbox belongs to (its parent) - lets a Hitbox refuse
 ## to hit a Hurtbox owned by the same entity as itself. Both Hitbox and
@@ -22,6 +26,7 @@ signal hit_avoided(damage: float, hitbox: Hitbox)
 @onready var owner_body: Node = get_parent()
 
 var _health: HealthComponent
+var _stability: StabilityComponent
 
 
 func _ready() -> void:
@@ -29,6 +34,8 @@ func _ready() -> void:
 	monitorable = true
 	if health_component_path != NodePath():
 		_health = get_node(health_component_path)
+	if stability_component_path != NodePath():
+		_stability = get_node(stability_component_path)
 
 
 func receive_hit(damage: float, hitbox: Hitbox) -> void:
@@ -37,3 +44,5 @@ func receive_hit(damage: float, hitbox: Hitbox) -> void:
 		hit_avoided.emit(damage, hitbox)
 	if _health:
 		_health.take_damage(damage)
+	if _stability and hitbox.stability_damage > 0.0:
+		_stability.damage_stability(hitbox.stability_damage)

@@ -19,3 +19,11 @@ var is_attacking: bool = false
 
 func physics_update(_delta: float) -> void:
 	pass
+
+
+## Forcibly ends an in-progress attack (used by EnemyController when
+## stability breaks mid-attack - see StabilityComponent). Base no-op;
+## subclasses with a Hitbox/attack state override this to clean it up
+## properly (deactivate the Hitbox, hide any attack visual, ...).
+func cancel_attack() -> void:
+	pass

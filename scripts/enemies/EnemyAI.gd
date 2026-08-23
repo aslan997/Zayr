@@ -31,6 +31,9 @@ class_name EnemyAI
 @export var attack_recovery: float = 0.3
 @export var attack_cooldown: float = 0.6
 @export var damage: float = 10.0
+## Not from a design brief - placeholder, tunable. Kept small per
+## docs/COMBAT.md: normal attacks shouldn't reliably stagger on their own.
+@export var stability_damage: float = 8.0
 @export var hit_offset: float = 24.0
 
 var _attack_timer: float = 0.0
@@ -44,6 +47,7 @@ var _patrol_target_x: float = 0.0
 
 func _ready() -> void:
 	hitbox.damage = damage
+	hitbox.stability_damage = stability_damage
 	var spawn_x: float = body.global_position.x
 	_patrol_left_x = spawn_x - patrol_distance
 	_patrol_right_x = spawn_x + patrol_distance
@@ -117,3 +121,11 @@ func _find_player_if_needed() -> void:
 	var players: Array = body.get_tree().get_nodes_in_group("player")
 	if players.size() > 0:
 		_player = players[0]
+
+
+func cancel_attack() -> void:
+	if not is_attacking:
+		return
+	is_attacking = false
+	hitbox.deactivate()
+	swing_visual.visible = false

@@ -18,6 +18,9 @@ class_name RangedEnemyAI
 @export var attack_windup: float = 0.35
 @export var attack_cooldown: float = 1.1
 @export var damage: float = 8.0
+## Not from a design brief - placeholder, tunable. Kept small per
+## docs/COMBAT.md: normal attacks shouldn't reliably stagger on their own.
+@export var stability_damage: float = 6.0
 @export var projectile_speed: float = 260.0
 ## Where the projectile spawns, relative to this enemy, in its facing
 ## direction (matches the melee enemy's hit_offset convention).
@@ -72,6 +75,7 @@ func _fire() -> void:
 	proj.direction = facing
 	proj.speed = projectile_speed
 	proj.damage = damage
+	proj.stability_damage = stability_damage
 	proj.activate()
 
 
@@ -81,3 +85,8 @@ func _find_player_if_needed() -> void:
 	var players: Array = body.get_tree().get_nodes_in_group("player")
 	if players.size() > 0:
 		_player = players[0]
+
+
+func cancel_attack() -> void:
+	# Windup only, no Hitbox exists yet until _fire() - just abort.
+	is_attacking = false

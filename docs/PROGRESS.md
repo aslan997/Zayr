@@ -959,11 +959,179 @@ disappear a moment after it's defeated.
   runtime resolution — computed against the default 1152×648 viewport
   but not visually confirmed in-editor).
 
+## Prototype Review (no implementation)
+
+Before starting the vertical slice, user asked for a pause: a concise
+implementation-status audit against a checklist (Movement, Veyr/Mobility,
+Combat, Enemies, Boss System, Technical), explicitly with no files
+modified. Delivered as a status table, not a doc edit — see this
+conversation's transcript for the full report. Two items came back
+**PARTIALLY IMPLEMENTED**: 8-directional Veyr Step (logic correct, but
+diagonal directions never got a clean headless confirmation — a
+test-harness limitation noted since Step 10, not a suspected bug) and the
+mini-boss's phase system (one phase transition only, by design). Two
+items came back **NOT IMPLEMENTED**: Heavy Attack and Enemy Stability/
+Stagger. The audit also surfaced two combat gaps not on the user's
+checklist: no player HURT state, and `Projectile` not colliding with
+world geometry. All four became this milestone.
+
+## Milestone: Combat Prototype — Step 15 (Core Combat Gaps)
+
+**Status: implemented, headless-validated end-to-end through the real
+engine loop for all four systems — including catching and fixing two
+real bugs along the way, described below. Needs manual play-test.**
+
+User asked for exactly four systems, explicitly pausing before the
+vertical slice: **Heavy Attack**, **Enemy Stability/Stagger**, **Player
+HURT state**, **Projectile world collision**. Full design briefs given
+for each — see [COMBAT.md](COMBAT.md) §8–11 for the paraphrased briefs
+and implementation detail; this entry covers what changed, test results,
+and decisions worth flagging.
+
+### Files changed
+
+- `scripts/player/PlayerCombat.gd` — heavy attack, folded into the
+  existing combo component rather than a new one (shares the `Hitbox`/
+  `SwingVisual`, needs mutual-exclusion state with the combo).
+- `scripts/player/PlayerController.gd` — new `HURT` state: knockback,
+  input lockout for `hurt_duration`, optional post-hit invulnerability.
+  Also wires the new `heavy_attack` input into `PlayerCombat`. Removed
+  the old ad-hoc hurt-flash timer (now redundant — `HURT`'s own debug
+  color covers it).
+- `scripts/combat/StabilityComponent.gd` (new) — the stagger system.
+- `scripts/combat/Hitbox.gd` — added `stability_damage` (0 default).
+- `scripts/combat/Hurtbox.gd` — added optional `stability_component_path`
+  and applies stability damage alongside health damage when both are set.
+- `scripts/combat/HealthComponent.gd` — `is_invulnerable` refactored from
+  a plain bool to reference-counted (`add_invulnerability()`/
+  `remove_invulnerability()`) — see "Design decisions" below.
+- `scripts/player/PlayerVeyrStep.gd` — its two direct
+  `health.is_invulnerable = true/false` assignments updated to the new
+  `add_invulnerability()`/`remove_invulnerability()` calls. **No other
+  change** — same trigger moments, same duration, same effect; this was
+  the "unless absolutely necessary" exception the architecture rules
+  allow, not a rewrite.
+- `scripts/combat/Projectile.gd` — `body_entered` handling for world
+  collision, plus the `monitorable` fix below.
+- `scripts/enemies/EnemyAIBase.gd` — added virtual `cancel_attack()`.
+- `scripts/enemies/EnemyAI.gd`, `RangedEnemyAI.gd`, `scripts/bosses/
+  BossAI.gd` — each: a `cancel_attack()` override, and `stability_damage`
+  set on their own attack's `Hitbox`/`Projectile`.
+- `scripts/enemies/EnemyController.gd` — the stagger enforcement point
+  (see "Stability" below) and a `stagger_color` tint.
+- Scenes: `Enemy.tscn`, `RangedEnemy.tscn`, `MiniBoss.tscn` each gained a
+  `StabilityComponent` node (40/30/100 max stability respectively — the
+  boss also gets a longer 2.0s `stagger_duration` vs. the 1.5s default) and
+  a `stability_component_path` wired on their `Hurtbox`. `Projectile.tscn`
+  — `collision_mask` widened from `8` to `9` (added the world layer).
+- `project.godot` — new `heavy_attack` input action (L).
+
+### Design decisions that may need your approval
+
+1. **Stagger freezes movement, not just attacks.** The brief says a
+   staggered enemy "temporarily cannot perform normal attacks" — this
+   implementation also freezes patrol/chase movement, since the cleanest
+   and most reusable enforcement point turned out to be "don't call
+   `ai.physics_update()` at all while staggered" in the shared
+   `EnemyController`, which necessarily stops movement too. A
+   staggered-but-still-moving enemy would need stagger-awareness added to
+   every individual AI script instead. Flagging this since it goes
+   slightly beyond the literal brief.
+2. **`HealthComponent.is_invulnerable` is now reference-counted**, not a
+   plain bool. This was necessary, not a style choice: without it, the
+   HURT state's optional post-hit grace window and Veyr Step's own
+   invulnerability window are two independent sources that could overlap
+   in time, and whichever one happened to end first would incorrectly
+   cancel the other's. `PlayerVeyrStep.gd` needed a 2-line update to match
+   (its behavior is otherwise identical). This touches a system the
+   instructions asked not to rewrite "unless absolutely necessary" — this
+   was that case.
+3. **Heavy attack got its own dedicated input (L)**, not a hold-to-charge
+   on the existing attack button — matches "do not create a complicated
+   charge system," but is a specific input-binding choice worth knowing
+   about if a different scheme was pictured.
+4. All new numeric values (heavy attack damage/timing, per-attack
+   stability damage, stability pool sizes, hurt duration/knockback/
+   invuln) are placeholders **not** derived from any brief — each is
+   `@export`-tunable and called out as such in code comments and
+   [COMBAT.md](COMBAT.md).
+
+### Two real bugs found and fixed (not assumed away)
+
+- **Post-hit invulnerability was blocking its own triggering hit's
+  damage.** `PlayerController._on_hit_received` fires synchronously
+  *inside* `Hurtbox.receive_hit()`, *before* that same call reaches its
+  own `_health.take_damage(damage)` line. Granting invulnerability
+  synchronously in the hit-received handler meant the hit that was
+  supposed to start the grace period was already blocked by it. Fixed
+  with `call_deferred()` so the grant applies only after the current hit
+  finishes processing. Caught by the real-engine-loop test below (player
+  health didn't move on the first run), not assumed correct.
+- **`Area2D.monitorable = false` silently blocks `body_entered` entirely**
+  in this Godot version (4.7.2) — confirmed via an isolated minimal
+  reproduction (a bare `Area2D` overlapping a bare `StaticBody2D`, with
+  `monitorable` as the only variable changed between a failing and
+  passing run), not merely inferred. The base `Hitbox._ready()` sets
+  `monitorable = false` (correct for melee attacks, which never need
+  body detection) — `Projectile` inherits that and now explicitly
+  overrides it back to `true` after `super._ready()`, scoped to
+  `Projectile` only.
+
+### How to test
+
+1. **Heavy attack**: press L — a longer windup than the combo, then a
+   stronger orange swing. Try it on the melee enemy: one heavy hit should
+   visibly stagger it (40 stability damage on its 40 max).
+2. **Stability**: land a few normal combo hits on an enemy without
+   staggering it (small stability damage), then land a heavy attack and
+   watch it flash pale/gold, stop moving and attacking, then recover a
+   couple seconds later.
+3. **Player HURT**: let an enemy hit you — Zayr should flash red, get
+   knocked back and briefly lose control, then recover.
+4. **Projectile collision**: get the ranged enemy or boss to fire at you
+   while you're behind part of the arena's geometry — the shot should
+   vanish at the wall instead of continuing through.
+
+### Validation performed by the assistant
+
+- `godot --headless --path . --import` / `--quit-after 200` — both clean,
+  no errors, with both enemies and the boss present.
+- Wrote a throwaway real-engine-loop test (not committed) covering all
+  four systems together against a standalone test target (a bare
+  `HealthComponent`+`StabilityComponent`+`Hurtbox`, deliberately with no
+  AI/`Hitbox` of its own, so it couldn't hit the player back and
+  contaminate the HURT-state test) plus the real player/arena:
+  - Heavy attack: confirmed the `Hitbox` stays inactive through the full
+    `heavy_startup` and only opens after, confirmed exact damage (32) and
+    exact stability damage (40, staggering a 40-max target in one hit —
+    "break enemy defenses," confirmed literally), confirmed stagger
+    recovery back to max stability.
+  - Player HURT: confirmed exact damage (15) after the invulnerability-
+    race fix, confirmed knockback velocity direction/magnitude, confirmed
+    `HURT` state clears and normal movement input works again afterward.
+  - Projectile: confirmed a shot aimed at a real arena wall (`WallLeft`)
+    is removed on contact rather than continuing through — reproduced the
+    failure first (projectile sailed straight through, `overlapping_
+    bodies` staying empty for 200+ frames), root-caused it via the
+    isolated `monitorable` reproduction above, then confirmed the fix.
+- Two of my own test-authoring mistakes were caught and corrected during
+  this pass (not game bugs): setting a `NodePath` export after
+  `add_child()` instead of before (same "node setup order" lesson from
+  earlier milestones, re-learned), and checking a staggered enemy's state
+  too late — after its short `stagger_duration` had already elapsed and
+  auto-recovered, making a real effect look like a no-op. Both are noted
+  here so a future session doesn't waste time re-deriving them.
+- **Not yet verified:** "feel" of any of the four systems in real
+  play — stagger pacing, heavy attack commitment/risk, hurt-state
+  knockback distance, whether projectiles disappearing at walls reads
+  clearly. All four are functionally confirmed, not feel-tuned.
+
 ## Next Milestone (not started, awaiting direction)
 
-Per the user's stated roadmap, the next step after Mini-boss is
-**Vertical slice**, then **Art** — both are larger, more open-ended scope
-than anything built so far and will need direction on what a vertical
-slice concretely means here (which region(s), how much content, what
-"done" looks like) before starting. Do not start without explicit
-direction.
+Per the user's stated roadmap, the next step after these core combat gaps
+is the **Vertical slice**, then **Art**. Both are larger, more open-ended
+scope than anything built so far and will need direction on what a
+vertical slice concretely means here (which region(s), how much content,
+what "done" looks like) before starting. Do not start without explicit
+direction — the user has already signaled they want to pause and review
+before that point.

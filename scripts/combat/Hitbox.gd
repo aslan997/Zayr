@@ -8,6 +8,11 @@ class_name Hitbox
 signal hit_landed(hurtbox: Hurtbox)
 
 @export var damage: float = 10.0
+## Stability damage dealt to a target's StabilityComponent, if it has one
+## (see docs/COMBAT.md). 0 = no stability interaction - most Hitboxes
+## (e.g. an enemy's own attack against the player, who has no
+## StabilityComponent) simply leave this at 0.
+@export var stability_damage: float = 0.0
 
 ## The entity this Hitbox belongs to (its parent) - a Hurtbox owned by the
 ## same entity is ignored, so an entity can never hit itself.

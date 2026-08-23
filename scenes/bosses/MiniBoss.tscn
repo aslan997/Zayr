@@ -1,4 +1,4 @@
-[gd_scene load_steps=8 format=3]
+[gd_scene load_steps=9 format=3]
 
 [ext_resource type="Script" path="res://scripts/bosses/BossController.gd" id="1_ctrl"]
 [ext_resource type="Script" path="res://scripts/bosses/BossAI.gd" id="2_ai"]
@@ -6,6 +6,7 @@
 [ext_resource type="Script" path="res://scripts/combat/Hurtbox.gd" id="4_hurtbox"]
 [ext_resource type="Script" path="res://scripts/combat/Hitbox.gd" id="5_hitbox"]
 [ext_resource type="PackedScene" path="res://scenes/enemies/Projectile.tscn" id="6_projectile"]
+[ext_resource type="Script" path="res://scripts/combat/StabilityComponent.gd" id="7_stability"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_body"]
 size = Vector2(42, 69)
@@ -34,11 +35,17 @@ projectile_scene = ExtResource("6_projectile")
 script = ExtResource("3_health")
 max_health = 150.0
 
+[node name="StabilityComponent" type="Node" parent="."]
+script = ExtResource("7_stability")
+max_stability = 100.0
+stagger_duration = 2.0
+
 [node name="Hurtbox" type="Area2D" parent="."]
 collision_layer = 8
 collision_mask = 0
 script = ExtResource("4_hurtbox")
 health_component_path = NodePath("../HealthComponent")
+stability_component_path = NodePath("../StabilityComponent")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Hurtbox"]
 position = Vector2(0, -34.5)
