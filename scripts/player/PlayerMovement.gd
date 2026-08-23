@@ -105,6 +105,16 @@ func physics_update(delta: float, move_input: float, jump_just_pressed: bool, da
 	body.move_and_slide()
 
 
+## Forcibly ends an in-progress dash (used by systems that can interrupt
+## movement, e.g. PlayerVeyrStep). Applies the same cooldown a dash ending
+## normally would, so interrupting a dash can't be used to bypass it.
+func cancel_dash() -> void:
+	if not is_dashing:
+		return
+	is_dashing = false
+	_dash_cooldown_timer = dash_cooldown
+
+
 func _start_dash(on_floor: bool) -> void:
 	is_dashing = true
 	dash_is_air = not on_floor

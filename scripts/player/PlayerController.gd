@@ -4,7 +4,7 @@ class_name PlayerController
 ## the Movement component. Combat/health/abilities will be added later as
 ## sibling components without this file absorbing their responsibilities.
 
-enum State { IDLE, RUN, JUMP, FALL, WALL_SLIDE, DASH, AIR_DASH, ATTACK_1, ATTACK_2, ATTACK_3, DEAD }
+enum State { IDLE, RUN, JUMP, FALL, WALL_SLIDE, DASH, AIR_DASH, ATTACK_1, ATTACK_2, ATTACK_3, VEYR_STEP, DEAD }
 
 ## Temporary debug tint per state, so state transitions are visible before
 ## real animations exist. Safe to delete once an AnimationPlayer/AnimatedSprite
@@ -20,6 +20,7 @@ const STATE_DEBUG_COLOR: Dictionary = {
 	State.ATTACK_1: Color(0.3, 0.95, 0.85),
 	State.ATTACK_2: Color(0.3, 0.75, 0.95),
 	State.ATTACK_3: Color(0.85, 0.55, 0.95),
+	State.VEYR_STEP: Color(0.55, 0.4, 1.0),
 	State.DEAD: Color(0.2, 0.2, 0.2),
 }
 ## Combo index (PlayerCombat.combo_index) -> the matching attack state.
@@ -35,6 +36,7 @@ const RESPAWN_DELAY: float = 1.2
 
 @onready var movement: PlayerMovement = $Movement
 @onready var combat: PlayerCombat = $Combat
+@onready var veyr_step: PlayerVeyrStep = $VeyrStep
 @onready var health: HealthComponent = $HealthComponent
 @onready var _debug_visual: Polygon2D = $Visual
 
@@ -59,12 +61,15 @@ func _physics_process(delta: float) -> void:
 		return
 
 	var move_input: float = Input.get_axis("move_left", "move_right")
+	var aim_y: float = Input.get_axis("aim_up", "aim_down")
 	var jump_just_pressed: bool = Input.is_action_just_pressed("jump")
 	var dash_just_pressed: bool = Input.is_action_just_pressed("dash")
 	var attack_just_pressed: bool = Input.is_action_just_pressed("attack")
+	var veyr_step_just_pressed: bool = Input.is_action_just_pressed("veyr_step")
 
 	movement.physics_update(delta, move_input, jump_just_pressed, dash_just_pressed)
 	combat.physics_update(delta, attack_just_pressed)
+	veyr_step.physics_update(delta, move_input, aim_y, veyr_step_just_pressed)
 	_hurt_flash_timer = maxf(_hurt_flash_timer - delta, 0.0)
 
 	_update_state(move_input)
@@ -95,7 +100,9 @@ func _respawn() -> void:
 
 
 func _update_state(move_input: float) -> void:
-	if movement.is_dashing:
+	if veyr_step.is_stepping:
+		state = State.VEYR_STEP
+	elif movement.is_dashing:
 		state = State.AIR_DASH if movement.dash_is_air else State.DASH
 	elif combat.is_attacking:
 		state = COMBO_STATE[combat.combo_index]

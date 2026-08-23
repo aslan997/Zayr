@@ -1,4 +1,4 @@
-[gd_scene load_steps=11 format=3]
+[gd_scene load_steps=12 format=3]
 
 [ext_resource type="Script" path="res://scripts/player/PlayerController.gd" id="1_ctrl"]
 [ext_resource type="Script" path="res://scripts/player/PlayerMovement.gd" id="2_move"]
@@ -8,6 +8,7 @@
 [ext_resource type="Script" path="res://scripts/combat/Hurtbox.gd" id="6_hurtbox"]
 [ext_resource type="Script" path="res://scripts/player/PlayerCombat.gd" id="7_combat"]
 [ext_resource type="Script" path="res://scripts/combat/Hitbox.gd" id="8_hitbox"]
+[ext_resource type="Script" path="res://scripts/player/PlayerVeyrStep.gd" id="9_veyr_step"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_body"]
 size = Vector2(28, 46)
@@ -69,3 +70,9 @@ shape = SubResource("RectangleShape2D_hitbox")
 visible = false
 color = Color(0.6, 0.95, 1, 1)
 polygon = PackedVector2Array(-12, 0, 10, -16, 38, 0, 10, 16)
+
+[node name="VeyrStep" type="Node" parent="."]
+script = ExtResource("9_veyr_step")
+
+[node name="TrailLine" type="Line2D" parent="."]
+top_level = true

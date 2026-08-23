@@ -132,6 +132,20 @@ func _advance_or_end_combo() -> void:
 		_cooldown_timer = attack_cooldown
 
 
+## Forcibly ends an in-progress swing (used by systems that can interrupt
+## combat, e.g. PlayerVeyrStep). Leaves the combo reset and on cooldown,
+## same as a swing ending normally without a queued follow-up.
+func cancel_attack() -> void:
+	if not is_attacking:
+		return
+	is_attacking = false
+	hitbox.deactivate()
+	swing_visual.visible = false
+	combo_index = 0
+	_queued_next = false
+	_cooldown_timer = attack_cooldown
+
+
 func _on_hitbox_hit_landed(_hurtbox: Hurtbox) -> void:
 	_apply_hitstop()
 

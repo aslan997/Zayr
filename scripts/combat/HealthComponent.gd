@@ -10,6 +10,9 @@ signal died
 @export var max_health: float = 100.0
 
 var current_health: float
+## Set/cleared by whatever grants invulnerability (e.g. PlayerVeyrStep's
+## transition window). take_damage() no-ops entirely while true.
+var is_invulnerable: bool = false
 
 
 func _ready() -> void:
@@ -17,7 +20,7 @@ func _ready() -> void:
 
 
 func take_damage(amount: float) -> void:
-	if amount <= 0.0 or is_dead():
+	if amount <= 0.0 or is_dead() or is_invulnerable:
 		return
 	current_health = maxf(current_health - amount, 0.0)
 	damaged.emit(amount)

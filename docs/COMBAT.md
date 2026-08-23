@@ -32,16 +32,21 @@ manifested around his body, not technically a sword.
 
 ## 3. Planned Player Combat Actions
 
-(Not yet implemented — recorded here for future milestones.)
-
-- Veyr Edge attacks
-- 3-hit combo
-- Heavy attack
-- Charged attack
-- Aerial attacks
-- Veyr ranged attack
-- Veyr Step
-- Perfect Step
+- Veyr Edge attacks — **implemented** (§6)
+- 3-hit combo — **implemented** (§6)
+- Veyr Step — **implemented** (§7). Not a movement ability like the dash —
+  an evasive/repositioning blink, hence living in this combat doc rather
+  than [ARCHITECTURE.md](ARCHITECTURE.md)'s player-movement section.
+- Heavy attack — not yet implemented
+- Charged attack — not yet implemented
+- Aerial attacks — not yet implemented
+- Veyr ranged attack — not yet implemented for the player (the enemy has
+  one via the reusable `Projectile` primitive it was built to eventually
+  serve — see [ARCHITECTURE.md](ARCHITECTURE.md) §4)
+- Perfect Step — not yet implemented (a precision-timing variant of Veyr
+  Step, per the original brief; Veyr Step itself doesn't yet reward
+  "precise timing" beyond its invulnerability window existing at all —
+  see §7's known limitations)
 
 ## 4. Resource: Veyr
 
@@ -114,11 +119,12 @@ both hit and be hit by the player. See [PROGRESS.md](PROGRESS.md).**
 - Per-swing damage (12/12/20) is a placeholder, not from the brief — exact
   combat balance is still TBD.
 - **Not implemented, deliberately out of scope:** heavy/charged attacks,
-  aerial attacks, the ranged Veyr attack, Veyr Step, Perfect Step,
-  stagger/stability, screen shake, enemy telegraphs.
+  aerial attacks, the ranged Veyr attack, Perfect Step, stagger/stability,
+  screen shake, enemy telegraphs.
 - **Known simplification:** the attack does not lock or cancel movement/
-  dash — they run independently. Revisit once combo/interrupt rules are
-  actually designed; not invented here.
+  dash on its own — they run independently, *except* that Veyr Step (§7)
+  can now interrupt an in-progress attack. Revisit the rest once full
+  combo/interrupt rules are actually designed; not invented here.
 
 ### Previous status (combat primitives skeleton)
 
@@ -138,3 +144,71 @@ both hit and be hit by the player. See [PROGRESS.md](PROGRESS.md).**
   an actual attack (Veyr Edge) to drive it, which is out of scope here.
 - No enemies, no damage sources, no death handling, no UI. See
   [PROGRESS.md](PROGRESS.md) for validation performed.
+
+## 7. Veyr Step
+
+User-specified design (paraphrased from the brief this was built from —
+see [PROGRESS.md](PROGRESS.md) for the full milestone entry):
+
+- An instantaneous 8-directional blink — Zayr dissolves into Veyr and
+  reappears at the destination, not a fast traveled dash. Deliberately
+  **not** a second/faster dash: shorter range than the dash, no travel
+  animation, no speed-up.
+- Aimed by whatever direction is held at the moment of activation
+  (8-way: 4 cardinal + 4 diagonal); defaults to Zayr's current facing
+  with no direction held.
+- Primarily evasive/repositioning, but usable offensively too (closing
+  distance, getting behind an enemy).
+- A very short invulnerability window during the transition, rewarding
+  precise defensive timing.
+- Works identically on the ground and in the air.
+- Not spammable — cooldown/resource-gated.
+- Can interrupt certain movement/attack states for emergency
+  repositioning, but not everything, and not via a full cancel-window
+  system (not designed yet, not invented here).
+- Visual: brief dissolve, a short trail/afterimage connecting the two
+  points, reform at the destination — not a visible travel animation.
+
+**Implemented as described**, in `scripts/player/PlayerVeyrStep.gd`:
+
+- Teleports immediately (`CharacterBody2D.global_position` set directly,
+  no traveled motion) in the 8-directional input read from
+  `move_left`/`move_right` + two new actions, `aim_up`/`aim_down` (W/S),
+  added specifically for this — the project had no vertical input before
+  Veyr Step, since it's a side-scroller with no look-up/crouch. Falls
+  back to `Movement.facing` with no direction held.
+- `step_distance` (90px, less than the dash's 130px) and `step_duration`/
+  `step_cooldown` are all `@export`-tunable, per the brief's "prioritize
+  responsiveness... over perfect balancing; make important values
+  configurable."
+- Invulnerability: `HealthComponent` gained an `is_invulnerable` flag
+  (generic, not Veyr-Step-specific) that `take_damage()` now checks.
+  Set/cleared by `PlayerVeyrStep` for the `step_duration` window.
+- Interrupt: on activation, calls `PlayerMovement.cancel_dash()` and
+  `PlayerCombat.cancel_attack()` (new methods on each, applying the same
+  cooldown a normal end would) — a one-time reset, not a cancel-window
+  system. Veyr Step itself can always be triggered regardless of what
+  movement/combat are doing (subject to its own cooldown).
+- Wall safety: the teleport motion is checked with
+  `CharacterBody2D.move_and_collide(motion, true)` (test-only) first, and
+  clamped to `get_travel()` if the straight-line path would end inside
+  solid geometry — otherwise an 8-directional blink could put Zayr inside
+  a wall.
+- Visual: a `Line2D` trail (a `top_level` node so its points stay in world
+  space independent of Zayr's own transform) drawn between the pre- and
+  post-step position, fading over `step_duration`; Zayr's own placeholder
+  visual is hidden for that same window and restored after. No particle
+  "shatter" burst — flagged as a placeholder simplification, see below.
+
+**Known limitations, not fixed:**
+- The "dissolve into geometric Veyr particles" part of the brief is only
+  partially realized — there's a fading trail line, but no actual burst/
+  shard effect at the departure and arrival points. Deferred rather than
+  building a particle system for a prototype.
+- No distinct reward for *precise* invulnerability timing beyond the
+  window existing at all — that's explicitly the not-yet-implemented
+  "Perfect Step" from the brief (§3), a separate ability.
+- Projectile.tscn's world-collision limitation ([ARCHITECTURE.md](ARCHITECTURE.md)
+  §4) doesn't apply here, but the wall-clamp above hasn't been exercised
+  against every wall shape in the arena — flagging for manual play-test
+  rather than assuming it's airtight everywhere.

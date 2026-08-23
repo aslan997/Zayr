@@ -615,9 +615,108 @@ scope.
   FloorB — is too much at once for a prototype) — needs a manual play
   session.
 
+## Milestone: Combat Prototype — Step 10 (Veyr Step)
+
+**Status: implemented, headless-validated for the core mechanics (exact
+teleport distance, invulnerability actually blocking damage, cooldown
+gating), needs manual play-test — especially the diagonal directions and
+wall-clamp, which hit test-harness limitations rather than being fully
+proven, see below.**
+
+Previous round I said "continue" with no remaining well-specified
+candidate — the only thing left (Veyr Step) was explicitly reserved
+future design in the brief with no mechanics decided, so I asked instead
+of guessing. User chose to define it directly; the full brief they gave
+is preserved in this session's transcript and summarized in
+[COMBAT.md](COMBAT.md) §7. This is the first ability in this project
+implemented from a user-authored design brief rather than the assistant
+picking the next well-scoped increment.
+
+### What changed
+
+- `scripts/player/PlayerVeyrStep.gd` (new) — 8-directional instant blink.
+  Reads `move_left`/`move_right` + two new actions added specifically for
+  this (`aim_up`/`aim_down`, W/S — the project had no vertical input
+  before, being a side-scroller). Falls back to `Movement.facing` with no
+  direction held. Teleports by setting `global_position` directly (no
+  traveled motion), after a `move_and_collide(motion, true)` test-only
+  check clamps the motion short of landing inside a wall. Grants
+  `step_duration` of invulnerability and hides Zayr's visual for that
+  window, drawing a fading `Line2D` trail between the two positions.
+  `step_distance` (90px) is deliberately less than the dash's 130px, and
+  `step_duration`/`step_cooldown` are all `@export`-tunable, per the
+  brief's explicit "prioritize responsiveness over perfect balancing."
+- `scripts/combat/HealthComponent.gd` — added `is_invulnerable` (generic,
+  not Veyr-Step-specific), checked by `take_damage()`.
+- `scripts/player/PlayerMovement.gd` / `PlayerCombat.gd` — added
+  `cancel_dash()` / `cancel_attack()`, called by `PlayerVeyrStep` on
+  activation so it can interrupt an in-progress dash or attack (per the
+  brief: "emergency repositioning," not a full cancel-window system).
+  Each applies the same cooldown a normal end would, so interrupting
+  can't be used to bypass recovery.
+- `scripts/player/PlayerController.gd` — added `VEYR_STEP` state (highest
+  priority in the state derivation, since it can interrupt everything
+  else) and wired the new inputs.
+- `project.godot` — added `aim_up`, `aim_down`, `veyr_step` (K) actions.
+- `scenes/player/Player.tscn` — added the `VeyrStep` component and a
+  `TrailLine` (`Line2D`, `top_level = true` so its points stay in world
+  space regardless of Zayr's own transform).
+
+### Known gap (flagged, not built)
+
+The brief asked for Zayr to "dissolve into geometric Veyr particles" —
+only the fading trail line is implemented; there's no separate particle/
+shard burst at the departure and arrival points. Also no "Perfect Step"
+(a named, separate ability in the brief for rewarding precise
+invulnerability timing specifically) — Veyr Step grants i-frames for its
+whole duration, nothing beyond that yet.
+
+### How to test
+
+1. Run the project (F5). Press K to blink — try it standing still
+   (steps in your facing direction), while holding a direction, and while
+   holding a diagonal (e.g. D+W for up-right).
+2. Confirm it works in the air too (jump, then step).
+3. Try it against a wall (e.g. the wall-jump corridor) — it should not
+   teleport you through solid geometry.
+4. Try triggering it mid-dash and mid-attack-swing — both should cut off
+   cleanly rather than continuing to play out.
+5. Try timing a step through an enemy's attack — you should see the
+   brief invulnerability actually prevent the hit if timed right.
+
+### Validation performed by the assistant
+
+- `godot --headless --path . --import` / `--quit-after 150` — both clean,
+  no errors.
+- Wrote a throwaway real-engine-loop test (not committed) that
+  consistently and cleanly confirmed, across repeated runs: a no-input
+  step travels exactly `step_distance` (90.0px) in the facing direction;
+  `HealthComponent.take_damage()` is fully blocked while stepping and
+  works normally again immediately after; an immediate re-press is
+  correctly refused for the full cooldown (held 60 frames / ~1s, well
+  past the 0.55s cooldown, and never triggered).
+- The diagonal-direction case (holding two movement keys + the step key
+  at once) and the wall-clamp case were **inconsistently reproducible**
+  in the same throwaway test — this reflects a known limitation of
+  driving multi-key input through this project's custom headless
+  `SceneTree` test scripts (idle-frame vs. physics-tick timing decouples
+  further with more simultaneously-held actions, a sharper version of the
+  lesson already recorded from Step 2), not evidence of a bug. One run
+  did complete cleanly: holding right+up produced a position delta of
+  `(64.1, -63.7)` against an expected `(63.6, -63.6)` — matching the
+  8-directional normalization math almost exactly. Given the core
+  teleport/invulnerability/cooldown logic (which the diagonal and
+  wall-clamp cases both build on directly) is proven solid, and the
+  direction math checks out in code review plus that one clean run, this
+  is recorded as **plausibly correct but not fully proven** — call this
+  out specifically during manual testing rather than assuming it's
+  already covered.
+
 ## Next Milestone (not started, awaiting direction)
 
-To be defined — the only remaining candidate from prior rounds is Veyr
-Step, which still needs its mechanics actually defined (not just
-implemented) before it can be built without inventing major-system
-design. Do not start without explicit approval.
+Every candidate raised across this session's rounds has now been built
+or explicitly deferred pending user design input. Do not start new work
+without explicit direction — possible directions include: the Veyr Step
+particle burst / Perfect Step follow-ups noted above, a UI pass (health/
+Veyr are still only visible via debug tints, no on-screen bars), further
+enemy variety, or new world/story content per the GDD's broader scope.

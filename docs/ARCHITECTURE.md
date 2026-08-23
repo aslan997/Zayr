@@ -71,10 +71,12 @@ This split exists so that combat, health, and abilities can be added later as
 additional sibling components without `PlayerController.gd` or
 `PlayerMovement.gd` growing to absorb their responsibilities. `HealthComponent`,
 `VeyrComponent`, and a `Hurtbox` (all in `scripts/combat/`, reusable beyond
-the player) are attached this way, and **`PlayerCombat.gd`** (Zayr's first
-Veyr Edge attack) follows the same `physics_update()`-called-from-controller
-pattern as `PlayerMovement.gd` — see [COMBAT.md](COMBAT.md) §6.
-`PlayerAbilities.gd` doesn't exist yet.
+the player) are attached this way, and **`PlayerCombat.gd`** (Zayr's Veyr
+Edge combo) and **`PlayerVeyrStep.gd`** (his evasive blink) both follow the
+same `physics_update()`-called-from-controller pattern as
+`PlayerMovement.gd` — see [COMBAT.md](COMBAT.md) §6–7. `PlayerAbilities.gd`
+doesn't exist as a separate file; Veyr Step lives directly in its own
+component instead, consistent with how combat already works.
 
 ### State Machine
 
@@ -82,16 +84,19 @@ pattern as `PlayerMovement.gd` — see [COMBAT.md](COMBAT.md) §6.
 states needed so far are implemented:
 
 ```
-IDLE, RUN, JUMP, FALL, WALL_SLIDE, DASH, AIR_DASH, ATTACK_1, ATTACK_2, ATTACK_3, DEAD
+IDLE, RUN, JUMP, FALL, WALL_SLIDE, DASH, AIR_DASH, ATTACK_1, ATTACK_2, ATTACK_3, VEYR_STEP, DEAD
 ```
 
 The remaining eventual states (`HEAVY_ATTACK, CHARGING, HURT, EMBER, VEIL`)
 are **not** implemented yet. `DEAD` exists but is prototype-minimal: no
 animation, just a freeze + timed respawn (see §3.2) — there's no `HURT`
-state (no knockback/i-frames/stagger design exists to build one from yet). States are derived from
-movement output each physics frame — the enum can be extended without
-restructuring the controller, since transitions are just a `match` on
-current velocity/contact/dash state.
+state; i-frames now exist (via `HealthComponent.is_invulnerable`, granted
+by Veyr Step — see [COMBAT.md](COMBAT.md) §7) but no knockback/stagger
+design does yet, so there's nothing to build a dedicated `HURT` state
+from. States are derived from movement/combat/step output each physics
+frame — the enum can be extended without restructuring the controller,
+since transitions are just a `match` on current velocity/contact/ability
+state.
 
 ### Dash / Air Dash
 
@@ -228,6 +233,14 @@ concern):
 - `jump` — Space
 - `dash` — Left Shift
 - `attack` — J
+- `aim_up` — W / Up Arrow
+- `aim_down` — S / Down Arrow
+- `veyr_step` — K
+
+`aim_up`/`aim_down` are purely directional-intent inputs for aiming Veyr
+Step (see [COMBAT.md](COMBAT.md) §7) — there's no crouch/look-up, so W/S
+were free to repurpose. Combined with `move_left`/`move_right`, they give
+the 8-directional input Veyr Step reads.
 
 ## 8. Known Gaps / Not Yet Decided
 
@@ -241,3 +254,10 @@ concern):
 - Two enemy variants exist (melee, ranged) — no `BossController`. See §4
   for their specific known limitations (ledge detection, chase leash,
   projectile/world collision, ranged-enemy kiting).
+- Veyr Step (see [COMBAT.md](COMBAT.md) §7) has no particle burst yet
+  (trail line only), and no "Perfect Step" precision-timing reward. Its
+  diagonal-direction math and wall-clamp were headless-validated but hit
+  test-harness timing flakiness on the multi-key-combo cases specifically
+  (not the core teleport/invulnerability/cooldown, which validated
+  cleanly and consistently) — worth a deliberate manual check of a few
+  diagonal directions and stepping straight at a wall.
