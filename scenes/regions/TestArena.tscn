@@ -1,4 +1,4 @@
-[gd_scene load_steps=8 format=3]
+[gd_scene load_steps=10 format=3]
 
 [ext_resource type="PackedScene" path="res://scenes/player/Player.tscn" id="1_player"]
 
@@ -17,6 +17,12 @@ size = Vector2(40, 240)
 [sub_resource type="RectangleShape2D" id="Shape_Ledge"]
 size = Vector2(160, 24)
 
+[sub_resource type="RectangleShape2D" id="Shape_DashFloor"]
+size = Vector2(200, 24)
+
+[sub_resource type="RectangleShape2D" id="Shape_HighLedge"]
+size = Vector2(150, 24)
+
 [node name="TestArena" type="Node2D"]
 
 [node name="Player" parent="." instance=ExtResource("1_player")]
@@ -25,7 +31,7 @@ position = Vector2(80, 568)
 [node name="Camera2D" parent="Player"]
 limit_left = -50
 limit_top = -100
-limit_right = 2080
+limit_right = 2780
 limit_bottom = 650
 
 [node name="Geometry" type="Node2D" parent="."]
@@ -125,3 +131,27 @@ shape = SubResource("Shape_Ledge")
 [node name="Visual" type="Polygon2D" parent="Geometry/LedgeEnd"]
 color = Color(0.5, 0.55, 0.65, 1)
 polygon = PackedVector2Array(-80, -12, 80, -12, 80, 12, -80, 12)
+
+[node name="DashGapFloor" type="StaticBody2D" parent="Geometry"]
+position = Vector2(2280, 340)
+collision_layer = 1
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Geometry/DashGapFloor"]
+shape = SubResource("Shape_DashFloor")
+
+[node name="Visual" type="Polygon2D" parent="Geometry/DashGapFloor"]
+color = Color(0.5, 0.55, 0.65, 1)
+polygon = PackedVector2Array(-100, -12, 100, -12, 100, 12, -100, 12)
+
+[node name="HighLedge" type="StaticBody2D" parent="Geometry"]
+position = Vector2(2625, 250)
+collision_layer = 1
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Geometry/HighLedge"]
+shape = SubResource("Shape_HighLedge")
+
+[node name="Visual" type="Polygon2D" parent="Geometry/HighLedge"]
+color = Color(0.4, 0.85, 0.95, 1)
+polygon = PackedVector2Array(-75, -12, 75, -12, 75, 12, -75, 12)

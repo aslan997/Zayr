@@ -30,20 +30,54 @@ class_name PlayerMovement
 @export var wall_jump_horizontal_speed: float = 240.0
 @export var wall_jump_input_lock_time: float = 0.12
 
+@export_group("Dash")
+@export var dash_distance: float = 130.0
+@export var dash_duration: float = 0.16
+## Not specified in the original design brief - minimal anti-spam recovery
+## time after a dash ends, exposed for tuning (0 to disable).
+@export var dash_cooldown: float = 0.2
+@export var air_dash_enabled: bool = true
+
 var is_wall_sliding: bool = false
 var just_wall_jumped: bool = false
+var is_dashing: bool = false
+var dash_is_air: bool = false
+var air_dash_available: bool = true
 
 var _coyote_timer: float = 0.0
 var _jump_buffer_timer: float = 0.0
 var _wall_jump_lock_timer: float = 0.0
 var _wall_normal_x: float = 0.0
+var _facing: float = 1.0
+var _dash_timer: float = 0.0
+var _dash_cooldown_timer: float = 0.0
+var _dash_direction: float = 1.0
 
 
-func physics_update(delta: float, move_input: float, jump_just_pressed: bool) -> void:
+func physics_update(delta: float, move_input: float, jump_just_pressed: bool, dash_just_pressed: bool) -> void:
 	just_wall_jumped = false
 	_update_timers(delta, jump_just_pressed)
+	_dash_cooldown_timer = max(_dash_cooldown_timer - delta, 0.0)
+
+	if move_input != 0.0:
+		_facing = signf(move_input)
 
 	var on_floor: bool = body.is_on_floor()
+
+	if on_floor:
+		air_dash_available = true
+
+	if is_dashing:
+		_process_dash(delta)
+		body.move_and_slide()
+		return
+
+	if dash_just_pressed and _dash_cooldown_timer <= 0.0 and (on_floor or (air_dash_enabled and air_dash_available)):
+		_start_dash(on_floor)
+		_process_dash(delta)
+		body.move_and_slide()
+		return
+
 	var on_wall: bool = body.is_on_wall() and not on_floor
 
 	is_wall_sliding = false
@@ -67,6 +101,23 @@ func physics_update(delta: float, move_input: float, jump_just_pressed: bool) ->
 		_apply_horizontal(delta, move_input, on_floor)
 
 	body.move_and_slide()
+
+
+func _start_dash(on_floor: bool) -> void:
+	is_dashing = true
+	dash_is_air = not on_floor
+	_dash_timer = dash_duration
+	_dash_direction = _facing
+	if not on_floor:
+		air_dash_available = false
+
+
+func _process_dash(delta: float) -> void:
+	_dash_timer -= delta
+	body.velocity = Vector2(_dash_direction * (dash_distance / dash_duration), 0.0)
+	if _dash_timer <= 0.0:
+		is_dashing = false
+		_dash_cooldown_timer = dash_cooldown
 
 
 func _update_timers(delta: float, jump_just_pressed: bool) -> void:

@@ -4,7 +4,7 @@ class_name PlayerController
 ## the Movement component. Combat/health/abilities will be added later as
 ## sibling components without this file absorbing their responsibilities.
 
-enum State { IDLE, RUN, JUMP, FALL, WALL_SLIDE }
+enum State { IDLE, RUN, JUMP, FALL, WALL_SLIDE, DASH, AIR_DASH }
 
 ## Temporary debug tint per state, so state transitions are visible before
 ## real animations exist. Safe to delete once an AnimationPlayer/AnimatedSprite
@@ -15,6 +15,8 @@ const STATE_DEBUG_COLOR: Dictionary = {
 	State.JUMP: Color(0.95, 0.85, 0.35),
 	State.FALL: Color(0.95, 0.55, 0.3),
 	State.WALL_SLIDE: Color(0.8, 0.4, 0.9),
+	State.DASH: Color(1.0, 1.0, 1.0),
+	State.AIR_DASH: Color(1.0, 0.95, 0.2),
 }
 
 @onready var movement: PlayerMovement = $Movement
@@ -26,15 +28,18 @@ var state: State = State.IDLE
 func _physics_process(delta: float) -> void:
 	var move_input: float = Input.get_axis("move_left", "move_right")
 	var jump_just_pressed: bool = Input.is_action_just_pressed("jump")
+	var dash_just_pressed: bool = Input.is_action_just_pressed("dash")
 
-	movement.physics_update(delta, move_input, jump_just_pressed)
+	movement.physics_update(delta, move_input, jump_just_pressed, dash_just_pressed)
 
 	_update_state(move_input)
 	_update_debug_visual()
 
 
 func _update_state(move_input: float) -> void:
-	if movement.is_wall_sliding:
+	if movement.is_dashing:
+		state = State.AIR_DASH if movement.dash_is_air else State.DASH
+	elif movement.is_wall_sliding:
 		state = State.WALL_SLIDE
 	elif not is_on_floor():
 		state = State.JUMP if velocity.y < 0.0 else State.FALL

@@ -78,8 +78,75 @@ implementation pass.
 - No combat, enemies, bosses, story, dialogue, memories, save system, or
   final art, per this milestone's explicit scope.
 
+## Milestone: Combat Prototype — Step 2 (Dash / Air Dash)
+
+**Status: implemented, headless-validated, needs manual play-test in editor.**
+
+Player-validated Step 1 first ("feels right"), then chose this as the next
+step from three options (dash/air dash, combat primitives skeleton, or a
+first Veyr Edge attack) — dash/air dash picked as the lowest-risk way to
+finish the core movement set before touching combat.
+
+### What changed
+
+- `scripts/player/PlayerMovement.gd` — added ground dash and a single-charge
+  air dash. Horizontal burst using the brief's values (130px distance,
+  0.16s duration → constant velocity for the duration, gravity suspended).
+  Air dash charge resets on landing. New `@export_group("Dash")`: dash
+  distance/duration, `dash_cooldown` (ground-dash anti-spam, not specified
+  in the brief), `air_dash_enabled`.
+- `scripts/player/PlayerController.gd` — added `DASH`/`AIR_DASH` states and
+  debug tint colors; reads the new `dash` input action.
+- `project.godot` — added `dash` input action (Left Shift).
+- `scenes/regions/TestArena.tscn` — additively extended past the existing
+  end ledge with a dash-practice zone: a gap floor and a higher ledge
+  positioned just beyond a plain jump's reach, so reaching it meaningfully
+  exercises the air dash. Nothing in the Step 1 geometry was moved. Camera
+  `limit_right` widened from 2080 to 2780 to cover it.
+
+See [ARCHITECTURE.md](ARCHITECTURE.md) §3 ("Dash / Air Dash") for the
+implementation notes and the two inferred defaults (`dash_cooldown`, and
+that post-dash momentum decays naturally rather than hard-resetting).
+
+### How to test
+
+1. Run the project (F5).
+2. Left Shift dashes in the current facing direction; on the ground it can
+   be repeated (after a short cooldown), in the air it works once until you
+   touch the floor again.
+3. Past the original end ledge, a new gap + elevated ledge (cyan) requires
+   jump + air dash together to reach.
+4. The debug rectangle flashes white on a ground dash and yellow on an air
+   dash.
+
+### Validation performed by the assistant
+
+- `godot --headless --path . --import` — clean, no errors, all three
+  scripts still register as global classes.
+- `godot --headless --path . --quit-after 60` — clean, no runtime errors.
+- Wrote a throwaway headless test scene (not committed) that ran the dash
+  through the **real** engine `_physics_process` loop and logged position
+  on every `is_dashing` state transition: ground dash covered 135.4px in
+  10 physics frames (target 130px — the ~4% difference is expected
+  frame-quantization since 0.16s doesn't divide evenly by the 60Hz physics
+  tick, not a bug). Air dash correctly consumed its single charge and
+  refused a second attempt while airborne.
+- Also tried validating dash distance by calling `PlayerMovement.
+  physics_update()` manually in a tight synthetic loop (bypassing the
+  engine's real physics scheduling). That approach produced wildly
+  inconsistent `move_and_slide()` displacement (up to ~9x expected) and is
+  **not** a trustworthy test methodology — confirmed as a harness artifact,
+  not a real bug, by cross-checking against the real-loop test above. Noting
+  this so a future session doesn't waste time re-deriving it: don't drive
+  `CharacterBody2D.move_and_slide()` via manual synchronous calls outside
+  the engine's actual physics tick when testing headless; use a
+  `SceneTree._process()` override and real input events instead.
+- **Not yet verified:** actual dash "feel" (commitment, cooldown pacing,
+  whether the momentum-carry after a dash ends feels right) — needs a
+  manual play session.
+
 ## Next Milestone (not started, awaiting direction)
 
-To be defined — likely candidates per the GDD's incremental scope: dash /
-air dash, or a first pass at the Veyr Edge combat primitives (Hitbox/
-Hurtbox, HealthComponent). Do not start without explicit approval.
+To be defined — likely candidates per the GDD's incremental scope: a first
+pass at the Veyr Edge combat primitives (Hitbox/Hurtbox, HealthComponent),
+or Veyr Step. Do not start without explicit approval.

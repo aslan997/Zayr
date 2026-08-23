@@ -75,17 +75,28 @@ additional sibling components (`PlayerCombat.gd`, `HealthComponent.gd`,
 ### State Machine
 
 `PlayerController.gd` holds a simple enum-based state machine. Only the
-states needed by the current milestone are implemented:
+states needed so far are implemented:
 
 ```
-IDLE, RUN, JUMP, FALL, WALL_SLIDE
+IDLE, RUN, JUMP, FALL, WALL_SLIDE, DASH, AIR_DASH
 ```
 
-The full eventual state list (`ATTACK_1/2/3, HEAVY_ATTACK, CHARGING, DASH,
-AIR_DASH, HURT, DEAD, EMBER, VEIL`) is **not** implemented yet. States are
-derived from movement output each physics frame — the enum can be extended
-without restructuring the controller, since transitions are just a `match` on
-current velocity/contact state.
+The remaining eventual states (`ATTACK_1/2/3, HEAVY_ATTACK, CHARGING, HURT,
+DEAD, EMBER, VEIL`) are **not** implemented yet. States are derived from
+movement output each physics frame — the enum can be extended without
+restructuring the controller, since transitions are just a `match` on
+current velocity/contact/dash state.
+
+### Dash / Air Dash
+
+Implemented in `PlayerMovement.gd` alongside the rest of the movement math,
+following the brief's values (130px distance, 0.16s duration). Horizontal
+only (matches the genre convention implied by a single distance value, not
+an invented 8-directional system). Air dash is a single charge, consumed on
+use and restored on landing. Two implementation defaults were needed that
+weren't specified in the brief and are exposed as `@export` for tuning:
+`dash_cooldown` (anti-spam recovery after a ground dash) and the fact that
+momentum carries after the dash ends rather than hard-resetting to zero.
 
 A temporary debug visualization (tinting the placeholder polygon per state)
 is included purely to make state transitions visible during manual testing
@@ -124,6 +135,7 @@ concern):
 - `move_left` — A / Left Arrow
 - `move_right` — D / Right Arrow
 - `jump` — Space
+- `dash` — Left Shift
 
 ## 7. Known Gaps / Not Yet Decided
 
