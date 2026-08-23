@@ -1,6 +1,6 @@
-extends Node
+extends EnemyAIBase
 class_name EnemyAI
-## First-enemy behavior: patrols between two points centered on its spawn
+## Melee enemy behavior: patrols between two points centered on its spawn
 ## position; when the player enters detection_range, chases them; when
 ## within attack_range, performs a telegraphed attack (own Hitbox) on a
 ## cooldown, standing still while doing so. Loses interest and resumes
@@ -32,12 +32,6 @@ class_name EnemyAI
 @export var attack_cooldown: float = 0.6
 @export var damage: float = 10.0
 @export var hit_offset: float = 24.0
-
-var facing: float = -1.0
-var is_attacking: bool = false
-## Horizontal velocity EnemyController should apply this frame; 0 while
-## attacking so the telegraph reads clearly.
-var move_velocity_x: float = 0.0
 
 var _attack_timer: float = 0.0
 var _cooldown_timer: float = 0.0

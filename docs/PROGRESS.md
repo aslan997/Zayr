@@ -541,8 +541,83 @@ confusing.
   closer checkpoint — is annoying given the walk back to the enemy) —
   needs a manual play session.
 
+## Milestone: Combat Prototype — Step 9 (Ranged Enemy + Projectile)
+
+**Status: implemented, headless-validated end-to-end through the real
+engine loop, needs manual play-test.**
+
+User said "continue" a sixth time without picking between the last two
+options (Veyr Step or a second enemy variant). Went with the enemy
+variant: Veyr Step is explicitly named as reserved future design in the
+original brief ("Later major abilities") with no mechanics decided, so
+building it would mean inventing a major system the brief says not to
+invent. A second enemy type isn't reserved content anywhere, and building
+a ranged one produces a reusable `Projectile` primitive the brief already
+calls for on the player's side too ("Veyr ranged attack") — not wasted
+scope.
+
+### What changed
+
+- **Refactor for reuse:** `scripts/enemies/EnemyAIBase.gd` (new) is the
+  interface `EnemyController` now programs against (`facing`,
+  `move_velocity_x`, `is_attacking`, `physics_update()`), instead of the
+  concrete `EnemyAI` class. `EnemyAI.gd` now extends it. This was
+  necessary, not incidental — Godot's static `@onready` typing meant
+  `EnemyController` couldn't host a second AI class without it.
+  `EnemyController.gd` also gained a shared attacking-tint (yellow pulse)
+  whenever `ai.is_attacking`, so both enemy variants get a telegraph
+  beyond just their own attack-specific visual — improves the melee
+  enemy's readability too, not just the new one's.
+- `scripts/combat/Projectile.gd` (new) — extends `Hitbox`: a moving,
+  single-use hitbox that travels in a straight line and destroys itself
+  on landing a hit or after `lifetime`. Written generically (not
+  enemy-specific) since the brief's future player "Veyr ranged attack"
+  will want the same primitive.
+- `scripts/enemies/RangedEnemyAI.gd` (new) — stationary; within
+  `detection_range` it winds up then instantiates+fires a `Projectile`
+  toward the player on a cooldown. Explicitly sets the projectile's
+  `owner_body` to itself after reparenting it to the scene root (not left
+  as the auto-detected `get_parent()`, which would be wrong post-reparent)
+  so the Step 6 same-owner exclusion still works correctly.
+- `scenes/enemies/RangedEnemy.tscn`, `scenes/enemies/Projectile.tscn`
+  (new) — the ranged enemy (fewer HP than the melee one — a placeholder
+  "glass cannon" balance choice, not from the brief) and its shot.
+- `scenes/regions/TestArena.tscn` — placed the ranged enemy further along
+  FloorB past the melee one.
+
+### How to test
+
+1. Run the project (F5), walk past the melee enemy on FloorB.
+2. A teal enemy stands further along — approach and it should flash
+   yellow (windup) then fire an orange projectile at you.
+3. Fight back with the combo — it has less health than the melee enemy,
+   should go down faster.
+4. Watch the melee enemy's own windup too — it should now also flash
+   yellow before swinging, in addition to its blade visual appearing.
+
+### Validation performed by the assistant
+
+- `godot --headless --path . --import` / `--quit-after 150` — both clean,
+  no errors, with both enemies present (ranged one idling, out of range).
+- Wrote a throwaway real-engine-loop test (not committed) that placed the
+  player within the ranged enemy's `detection_range`: confirmed a
+  `Projectile` appeared in the scene tree at the expected spawn position
+  (computed by hand against `muzzle_offset`/facing and matched exactly),
+  confirmed the player's health dropped by exactly the configured 8
+  damage on hit, and confirmed the projectile was gone from the tree
+  afterward (not just invisible).
+- Re-ran the existing `--import`/`--quit-after` checks after the
+  `EnemyAIBase` refactor specifically to confirm the melee enemy (`Enemy.
+  tscn`) still works unchanged through the new shared interface.
+- **Not yet verified:** ranged-encounter "feel" (whether the projectile
+  is easy to read/dodge, whether facing two enemy types with different
+  threats at once — dummy, melee, ranged, all reachable without leaving
+  FloorB — is too much at once for a prototype) — needs a manual play
+  session.
+
 ## Next Milestone (not started, awaiting direction)
 
-To be defined — likely candidates: Veyr Step (still needs its mechanics
-defined, not just implemented), or a second enemy variant. Do not start
-without explicit approval.
+To be defined — the only remaining candidate from prior rounds is Veyr
+Step, which still needs its mechanics actually defined (not just
+implemented) before it can be built without inventing major-system
+design. Do not start without explicit approval.

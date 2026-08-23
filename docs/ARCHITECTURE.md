@@ -22,7 +22,7 @@ is organized. Update this when structural decisions are made.
 ├── project.godot
 ├── scenes/
 │   ├── player/          Player scene(s)
-│   ├── enemies/         Enemy scenes (Enemy.tscn - one enemy so far)
+│   ├── enemies/         Enemy scenes (Enemy.tscn, RangedEnemy.tscn, Projectile.tscn)
 │   ├── bosses/          Boss scenes (not yet populated)
 │   ├── regions/         Level/region scenes (test arena lives here for now)
 │   ├── ui/               UI scenes (not yet populated)
@@ -30,8 +30,8 @@ is organized. Update this when structural decisions are made.
 │
 ├── scripts/
 │   ├── player/          PlayerController, PlayerMovement, ...
-│   ├── combat/          HealthComponent, VeyrComponent, Hitbox, Hurtbox
-│   ├── enemies/         EnemyController, EnemyAI
+│   ├── combat/          HealthComponent, VeyrComponent, Hitbox, Hurtbox, Projectile
+│   ├── enemies/         EnemyController, EnemyAIBase, EnemyAI, RangedEnemyAI
 │   ├── bosses/          Boss controller scripts (not yet populated)
 │   ├── systems/         Cross-cutting systems (camera, save, dialogue, memory, ...)
 │   └── ui/              UI scripts (not yet populated)
@@ -133,32 +133,56 @@ persistence across scene reloads.
 
 ## 4. Enemy Architecture
 
-Mirrors the player's Controller/component split:
+Mirrors the player's Controller/component split, and is shared across
+every enemy variant via a common AI interface:
 
-- **`scenes/enemies/Enemy.tscn`** — `CharacterBody2D` root, same shape/
-  layout conventions as `Player.tscn` (origin at feet, `HealthComponent`,
-  `Hurtbox`, `Hitbox` with a `SwingVisual` child).
-- **`scripts/enemies/EnemyController.gd`** — applies gravity, calls
-  `EnemyAI.physics_update()`, and owns this enemy's hit-flash/death-fade
-  feedback (on `HealthComponent.died`: fade out, then `queue_free()`).
-- **`scripts/enemies/EnemyAI.gd`** — patrols back and forth within
-  `patrol_distance` of its spawn point; when the player (found via the
-  `"player"` group) enters `detection_range` it chases instead; within
-  `attack_range` it performs a telegraphed attack (own `Hitbox`, standing
-  still) on a cooldown. Exposes `move_velocity_x` each frame, which
-  `EnemyController` applies to `velocity.x` before `move_and_slide()` —
-  `EnemyAI` never touches the body's `CharacterBody2D` API directly.
-  **No ledge/edge detection** — patrol and chase both rely on being
-  placed somewhere with enough clear floor; an enemy patrolling near a
-  ledge could walk off it. Chase has no leash/return-to-post behavior —
-  a player could in principle nudge it away from its patrol zone by
-  repeatedly stepping just inside then outside `detection_range`. Both
-  are acceptable for a first pass, not fixed here.
+- **`scripts/enemies/EnemyAIBase.gd`** — the contract `EnemyController`
+  programs against: `facing`, `move_velocity_x`, `is_attacking`, and
+  `physics_update()`. `EnemyController` never references a concrete AI
+  class, so adding a new enemy variant never requires changing it.
+- **`scripts/enemies/EnemyController.gd`** — root controller for every
+  enemy. Applies gravity, takes `ai.move_velocity_x`, calls
+  `move_and_slide()`, and owns hit-flash / attacking-tint / death-fade
+  feedback generically (on `HealthComponent.died`: fade out, then
+  `queue_free()`).
+- **`scenes/enemies/Enemy.tscn`** + **`scripts/enemies/EnemyAI.gd`** —
+  the melee variant. `CharacterBody2D` root (same layout conventions as
+  `Player.tscn`: origin at feet, `HealthComponent`, `Hurtbox`, plus a
+  `Hitbox` with a `SwingVisual` child). Patrols back and forth within
+  `patrol_distance` of its spawn point; switches to chasing the player
+  within `detection_range`; performs a telegraphed attack (own `Hitbox`,
+  standing still) within `attack_range` on a cooldown.
+- **`scenes/enemies/RangedEnemy.tscn`** + **`scripts/enemies/
+  RangedEnemyAI.gd`** — the ranged variant. Same body/`HealthComponent`/
+  `Hurtbox` setup, but no static `Hitbox` — instead it's stationary and,
+  within `detection_range`, winds up then fires a **`Projectile`**
+  (`scripts/combat/Projectile.gd`, `scenes/enemies/Projectile.tscn`) at
+  the player on a cooldown. `Projectile` extends `Hitbox` (a moving,
+  single-use one: travels in a straight line, destroys itself on landing
+  a hit or after `lifetime`) and is reusable later for Zayr's own
+  "Veyr ranged attack" ([COMBAT.md](COMBAT.md) §3, not implemented). A
+  fired projectile is reparented to `get_tree().current_scene` (not left
+  under the enemy) so it survives if the enemy dies mid-flight, and has
+  its `owner_body` explicitly set to the firing enemy (not left to the
+  default `get_parent()`, which would resolve to the scene root after
+  reparenting) so the same-owner exclusion in §3.1 still means what it
+  should.
 
-This is the first enemy in the project. `BossController` and any shared
-`EnemyController` base behavior beyond this one enemy don't exist yet —
-revisit once a second enemy type shows what's actually common between them,
-rather than guessing now.
+**Known limitations, not fixed:**
+- No ledge/edge detection — melee patrol/chase relies on clear floor; an
+  enemy near a ledge could walk off it (the ranged variant doesn't move,
+  so it's unaffected).
+- No chase leash/return-to-post on the melee enemy — a player could in
+  principle nudge it away from its patrol zone by repeatedly stepping
+  just inside then outside `detection_range`.
+- `Projectile` doesn't collide with world geometry — it passes through
+  walls/floors rather than stopping at them, just expires after
+  `lifetime`. Fine for the current arena's clear sightlines, would need
+  addressing before placing a ranged enemy behind cover.
+- The ranged enemy is stationary — no kiting/repositioning to keep its
+  distance if the player closes in.
+
+`BossController` doesn't exist yet.
 
 ## 5. Camera
 
@@ -214,6 +238,6 @@ concern):
 - Falling off the test arena still isn't handled — no bottomless-pit
   detection, so falling off an edge just falls forever rather than
   triggering the death/respawn flow above.
-- Only one enemy type exists — no ranged/varied attacks, no
-  `BossController`. It patrols/chases (see §4) but has no ledge detection
-  or chase leash.
+- Two enemy variants exist (melee, ranged) — no `BossController`. See §4
+  for their specific known limitations (ledge detection, chase leash,
+  projectile/world collision, ranged-enemy kiting).

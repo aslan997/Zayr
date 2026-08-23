@@ -71,14 +71,23 @@ Once combat implementation begins, expect:
 **Veyr Edge 3-hit combo implemented, and the first enemy exists and can
 both hit and be hit by the player. See [PROGRESS.md](PROGRESS.md).**
 
-- A minimal first enemy (`scripts/enemies/EnemyController.gd` +
-  `EnemyAI.gd`, `scenes/enemies/Enemy.tscn`) patrols near its spawn point,
-  chases the player within `detection_range`, and performs its own
-  telegraphed attack (reusing `Hitbox`) within `attack_range` on a
-  cooldown. It has a `HealthComponent` and `Hurtbox` like the player, and
-  is removed from the scene (after a brief fade) when its health reaches
-  0. No varied attacks, no `BossController`, no ledge detection or chase
-  leash — see [ARCHITECTURE.md](ARCHITECTURE.md) §4.
+- Two enemy variants exist, sharing a common `EnemyController` +
+  `EnemyAIBase` interface (see [ARCHITECTURE.md](ARCHITECTURE.md) §4):
+  - **Melee** (`Enemy.tscn`) — patrols near its spawn point, chases the
+    player within `detection_range`, and performs its own telegraphed
+    attack (reusing `Hitbox`) within `attack_range` on a cooldown.
+  - **Ranged** (`RangedEnemy.tscn`) — stationary; within `detection_range`
+    it winds up then fires a **`Projectile`** (a moving, single-use
+    `Hitbox` — `scripts/combat/Projectile.gd`) at the player on a
+    cooldown. `Projectile` is written to be reusable later for Zayr's own
+    ranged Veyr attack (§3), not enemy-specific.
+  - Both have a `HealthComponent` and `Hurtbox` like the player, and are
+    removed from the scene (after a brief fade) when health reaches 0.
+    `EnemyController` shows a shared attacking-tint telegraph (on top of
+    whichever attack-specific visual the AI drives) whenever
+    `ai.is_attacking` is true.
+  - No `BossController`; each variant's specific known limitations are in
+    [ARCHITECTURE.md](ARCHITECTURE.md) §4.
 - Fixed a latent `Hitbox`/`Hurtbox` gap while adding the enemy: neither
   had any owner-exclusion check, so an entity with both a `Hitbox` and a
   `Hurtbox` (which the player already had, and the enemy now also has)
