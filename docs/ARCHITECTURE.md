@@ -25,7 +25,7 @@ is organized. Update this when structural decisions are made.
 │   ├── enemies/         Enemy scenes (Enemy.tscn, RangedEnemy.tscn, Projectile.tscn)
 │   ├── bosses/          Boss scenes (not yet populated)
 │   ├── regions/         Level/region scenes (test arena lives here for now)
-│   ├── ui/               UI scenes (not yet populated)
+│   ├── ui/               HUD.tscn, ResourceBar.tscn
 │   └── interactables/   Interactable object scenes (not yet populated)
 │
 ├── scripts/
@@ -34,7 +34,7 @@ is organized. Update this when structural decisions are made.
 │   ├── enemies/         EnemyController, EnemyAIBase, EnemyAI, RangedEnemyAI
 │   ├── bosses/          Boss controller scripts (not yet populated)
 │   ├── systems/         Cross-cutting systems (camera, save, dialogue, memory, ...)
-│   └── ui/              UI scripts (not yet populated)
+│   └── ui/              HUD, ResourceBar
 │
 ├── assets/
 │   ├── characters/, environments/, vfx/, audio/, fonts/   (empty, placeholder art only so far)
@@ -126,7 +126,7 @@ entity's Hitbox/Hurtbox share the same layers (see §6).
 
 ### 3.2 Death / Respawn
 
-No save system or game-over flow exists (out of scope — see §8), so
+No save system or game-over flow exists (out of scope — see §9), so
 `PlayerController` handles `HealthComponent.died` with the minimal thing
 that keeps a combat prototype testable: freeze input for
 `RESPAWN_DELAY`, then reset position to wherever Zayr started this scene
@@ -242,7 +242,24 @@ Step (see [COMBAT.md](COMBAT.md) §7) — there's no crouch/look-up, so W/S
 were free to repurpose. Combined with `move_left`/`move_right`, they give
 the 8-directional input Veyr Step reads.
 
-## 8. Known Gaps / Not Yet Decided
+## 8. UI
+
+- **`scripts/ui/ResourceBar.gd`** + **`scenes/ui/ResourceBar.tscn`** — a
+  generic current/max bar (flat-color `ColorRect`s, matching the
+  project's placeholder-geometric visual language rather than a themed
+  `ProgressBar`). `set_value(current, max)` resizes the fill; knows
+  nothing about health or Veyr specifically, so it's reusable for either
+  (or any future resource).
+- **`scripts/ui/HUD.gd`** + **`scenes/ui/HUD.tscn`** — a `CanvasLayer`
+  with a `ResourceBar` for health and one for Veyr. Finds the player via
+  the `"player"` group (the same lookup `EnemyAI` already uses) in a
+  `call_deferred()`'d connection, so it doesn't need manual per-region
+  wiring — instancing `HUD.tscn` in a region is enough. `TestArena.tscn`
+  does this.
+- No numeric text (just bars), no low-health warning state, no damage-
+  number popups. Deliberately minimal per what was asked for.
+
+## 9. Known Gaps / Not Yet Decided
 
 - No save system yet.
 - No animation system yet (placeholder geometry only).

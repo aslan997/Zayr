@@ -1,10 +1,11 @@
-[gd_scene load_steps=15 format=3]
+[gd_scene load_steps=16 format=3]
 
 [ext_resource type="PackedScene" path="res://scenes/player/Player.tscn" id="1_player"]
 [ext_resource type="Script" path="res://scripts/combat/HealthComponent.gd" id="2_dummy_health"]
 [ext_resource type="Script" path="res://scripts/combat/Hurtbox.gd" id="3_dummy_hurtbox"]
 [ext_resource type="PackedScene" path="res://scenes/enemies/Enemy.tscn" id="4_enemy"]
 [ext_resource type="PackedScene" path="res://scenes/enemies/RangedEnemy.tscn" id="5_ranged_enemy"]
+[ext_resource type="PackedScene" path="res://scenes/ui/HUD.tscn" id="6_hud"]
 
 [sub_resource type="RectangleShape2D" id="Shape_FloorA"]
 size = Vector2(560, 40)
@@ -58,6 +59,8 @@ func _on_died() -> void:
 "
 
 [node name="TestArena" type="Node2D"]
+
+[node name="HUD" parent="." instance=ExtResource("6_hud")]
 
 [node name="Player" parent="." instance=ExtResource("1_player")]
 position = Vector2(80, 568)

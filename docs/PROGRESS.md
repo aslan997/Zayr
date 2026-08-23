@@ -712,11 +712,61 @@ whole duration, nothing beyond that yet.
   out specifically during manual testing rather than assuming it's
   already covered.
 
+## Milestone: Combat Prototype — Step 11 (Minimal HUD)
+
+**Status: implemented, headless-validated end-to-end through the real
+engine loop, needs manual play-test (purely visual — layout/readability
+can't be judged headless).**
+
+Same situation as last round: nothing well-specified left on the list, so
+asked rather than guessing. User picked the UI pass over finishing Veyr
+Step's flagged gaps, defining a new ability, or something else.
+
+### What changed
+
+- `scripts/ui/ResourceBar.gd` + `scenes/ui/ResourceBar.tscn` (new) — a
+  generic current/max bar (flat-color `ColorRect`s, not a themed
+  `ProgressBar` — matches the project's existing placeholder-geometric
+  visual language). Knows nothing about health or Veyr specifically, just
+  `set_value(current, max)`; reusable for either.
+- `scripts/ui/HUD.gd` + `scenes/ui/HUD.tscn` (new) — a `CanvasLayer` with
+  a health bar and a Veyr bar. Finds the player via the `"player"` group
+  (same lookup `EnemyAI` already uses) instead of a hardcoded path, so it
+  doesn't need per-region wiring beyond instancing the scene.
+- `scenes/regions/TestArena.tscn` — instanced `HUD.tscn`.
+- No numeric text, no low-health warning, no damage-number popups —
+  deliberately minimal, matching what was actually asked for.
+
+### How to test
+
+Run the project (F5) — a red bar (health) and blue bar (Veyr) should sit
+in the top-left corner from the start, both full. Take a hit from an
+enemy and confirm the red bar visibly shrinks; nothing currently spends
+Veyr yet (no ability costs Veyr — see [COMBAT.md](COMBAT.md) §4, still
+TBD), so the blue bar won't move in normal play — that's expected, not a
+bug in the UI.
+
+### Validation performed by the assistant
+
+- `godot --headless --path . --import` / `--quit-after 150` — both clean,
+  no errors.
+- Wrote a throwaway real-engine-loop test (not committed) that read the
+  HUD's bars directly: confirmed both start at full width, then called
+  `HealthComponent.take_damage(50)` (on 100 max) and
+  `VeyrComponent.spend(30)` (on 100 max) and confirmed the fill widths
+  updated to **exactly** 50% and 70% of the bar's full pixel width,
+  respectively — the binding is correct, not just present.
+- Not attempting to headless-validate visual layout/readability (position
+  on screen, whether it overlaps anything, color contrast) — that's
+  inherently a manual-play concern, flagged rather than claimed covered.
+
 ## Next Milestone (not started, awaiting direction)
 
-Every candidate raised across this session's rounds has now been built
-or explicitly deferred pending user design input. Do not start new work
+Every candidate raised across this session has now been built or
+explicitly deferred pending user design input. Do not start new work
 without explicit direction — possible directions include: the Veyr Step
-particle burst / Perfect Step follow-ups noted above, a UI pass (health/
-Veyr are still only visible via debug tints, no on-screen bars), further
-enemy variety, or new world/story content per the GDD's broader scope.
+particle burst / Perfect Step follow-ups (Step 10), defining another
+named ability (Ember Form / Aether Flight / Veil — same situation Veyr
+Step was in before this session, needs a user design brief first),
+further enemy variety, or new world/story content per the GDD's broader
+scope.
