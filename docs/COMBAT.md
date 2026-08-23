@@ -456,3 +456,66 @@ shape or physics body needed).
   after calling `super._ready()`, scoped to `Projectile` only - the base
   `Hitbox` class is untouched, since melee attacks never need body
   detection and this doesn't affect them.
+
+## 12. Temporary Tuning Values (Step 15)
+
+**Every number below is an explicit placeholder** — none came from a
+design brief, none have been balance-tested, and all are `@export`ed
+specifically so they're trivial to retune later without touching code.
+Approved as-is per [PROGRESS.md](PROGRESS.md) Step 15, listed here in one
+place for easy reference when an actual balance pass happens.
+
+**Heavy Attack** (`PlayerCombat.gd`):
+
+| Value | Default |
+|---|---|
+| `heavy_startup` | 0.5s |
+| `heavy_active_duration` | 0.2s |
+| `heavy_recovery` | 0.35s |
+| `heavy_cooldown` | 0.4s |
+| `heavy_damage` | 32 |
+| `heavy_stability_damage` | 40 |
+| `heavy_hit_offset` | 30px |
+| `heavy_consumes_veyr` | `false` |
+| `heavy_veyr_cost` | 20 (inert while the above is `false`) |
+
+**Stability / Stagger** (`StabilityComponent.gd` defaults, and
+per-scene/per-attack overrides):
+
+| Value | Default |
+|---|---|
+| `StabilityComponent.max_stability` (component default) | 50 |
+| `StabilityComponent.recovery_rate` | 8/s |
+| `StabilityComponent.stagger_duration` | 1.5s |
+| `StabilityComponent.regen_delay` | 1.0s |
+| `Enemy.tscn` (melee) `max_stability` | 40 |
+| `RangedEnemy.tscn` `max_stability` | 30 |
+| `MiniBoss.tscn` `max_stability` | 100 |
+| `MiniBoss.tscn` `stagger_duration` | 2.0s (overrides the 1.5s default) |
+| `PlayerCombat.stability_damages` (combo swings 1/2/3) | 6 / 6 / 8 |
+| `EnemyAI.stability_damage` (melee enemy's attack) | 8 |
+| `RangedEnemyAI.stability_damage` (ranged enemy's shot) | 6 |
+| `BossAI.melee_stability_damage` | 10 |
+| `BossAI.ranged_stability_damage` | 6 |
+
+**Player HURT** (`PlayerController.gd`):
+
+| Value | Default |
+|---|---|
+| `hurt_duration` | 0.35s |
+| `knockback_force_x` | 220 |
+| `knockback_force_y` | -180 (upward pop) |
+| `post_hit_invulnerable_duration` | 0.5s (0 disables it) |
+
+**Projectile** (`Projectile.gd` default; per-shooter overrides):
+
+| Value | Default |
+|---|---|
+| `Projectile.speed` (component default) | 260 |
+| `Projectile.lifetime` | 2.0s |
+| `RangedEnemyAI.projectile_speed` | 260 |
+| `BossAI.projectile_speed` | 240 |
+| `Projectile.tscn` `collision_mask` | `9` (world + hurtbox layers) |
+
+`collision_mask` is a structural setting, not a balance value — listed
+above for completeness, not something to "retune."

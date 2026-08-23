@@ -94,6 +94,9 @@ func _physics_process(delta: float) -> void:
 	var jump_just_pressed: bool = Input.is_action_just_pressed("jump")
 	var dash_just_pressed: bool = Input.is_action_just_pressed("dash")
 	var attack_just_pressed: bool = Input.is_action_just_pressed("attack")
+	# "heavy_attack" is bound to L (see project.godot) as temporary
+	# prototype input - not a final keybind, just something free to test
+	# with. Expect this to be replaced/rebound during final input mapping.
 	var heavy_attack_just_pressed: bool = Input.is_action_just_pressed("heavy_attack")
 	var veyr_step_just_pressed: bool = Input.is_action_just_pressed("veyr_step")
 

@@ -308,7 +308,9 @@ concern):
 - `aim_up` — W / Up Arrow
 - `aim_down` — S / Down Arrow
 - `veyr_step` — K
-- `heavy_attack` — L
+- `heavy_attack` — L (**temporary prototype keybind** — an unused key
+  picked to get the system testable, not a deliberate final choice;
+  expect it to be replaced/rebound during final input mapping)
 
 `aim_up`/`aim_down` are purely directional-intent inputs for aiming Veyr
 Step (see [COMBAT.md](COMBAT.md) §7) — there's no crouch/look-up, so W/S
