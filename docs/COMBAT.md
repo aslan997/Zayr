@@ -72,12 +72,13 @@ Once combat implementation begins, expect:
 both hit and be hit by the player. See [PROGRESS.md](PROGRESS.md).**
 
 - A minimal first enemy (`scripts/enemies/EnemyController.gd` +
-  `EnemyAI.gd`, `scenes/enemies/Enemy.tscn`) is stationary, detects the
-  player, and performs its own telegraphed attack (reusing `Hitbox`) on a
-  cooldown when the player is close enough. It has a `HealthComponent` and
-  `Hurtbox` like the player, and is removed from the scene (after a brief
-  fade) when its health reaches 0. No patrol/chase movement, no varied
-  attacks, no `BossController` — see [ARCHITECTURE.md](ARCHITECTURE.md) §4.
+  `EnemyAI.gd`, `scenes/enemies/Enemy.tscn`) patrols near its spawn point,
+  chases the player within `detection_range`, and performs its own
+  telegraphed attack (reusing `Hitbox`) within `attack_range` on a
+  cooldown. It has a `HealthComponent` and `Hurtbox` like the player, and
+  is removed from the scene (after a brief fade) when its health reaches
+  0. No varied attacks, no `BossController`, no ledge detection or chase
+  leash — see [ARCHITECTURE.md](ARCHITECTURE.md) §4.
 - Fixed a latent `Hitbox`/`Hurtbox` gap while adding the enemy: neither
   had any owner-exclusion check, so an entity with both a `Hitbox` and a
   `Hurtbox` (which the player already had, and the enemy now also has)

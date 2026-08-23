@@ -422,8 +422,72 @@ forgotten.
   whether the cooldown/pacing feels fair, whether fighting near the gap
   edge causes movement issues) — needs a manual play session.
 
+## Milestone: Combat Prototype — Step 7 (Enemy Patrol / Chase)
+
+**Status: implemented, headless-validated through the real engine loop,
+needs manual play-test.**
+
+User said "continue" a fourth time without picking between the three
+remaining options (Veyr Step, enemy movement, or a second enemy variant).
+Went with enemy movement: `EnemyAI.gd`'s own docstring already flagged
+"No movement/chase/patrol yet" as deliberately deferred scope, so this
+finishes something already declared rather than starting something new —
+lower-risk than a second enemy variant (new content to design) and, as
+always, Veyr Step still has no defined mechanics beyond its name.
+
+### What changed
+
+- `scripts/enemies/EnemyAI.gd` — now patrols back and forth within
+  `patrol_distance` of wherever it spawns (computed at `_ready()`, so
+  `Enemy.tscn` stays placement-agnostic — the patrol center isn't
+  hardcoded), switches to chasing the player once they're within
+  `detection_range`, and attacks (as before) once within `attack_range`.
+  Standing still while attacking is preserved. Exposes `move_velocity_x`
+  instead of touching the body directly.
+- `scripts/enemies/EnemyController.gd` — applies `ai.move_velocity_x` to
+  `velocity.x` each physics frame, before gravity/`move_and_slide()`.
+
+### Known limitations (flagged, not fixed)
+
+- No ledge/edge detection — patrol and chase both assume clear floor. The
+  test arena's placement (`patrol_distance = 110` around `x = 850` on
+  `FloorB`, which spans `720`–`1900`) is safe, but this would need
+  addressing before placing an enemy near a platform edge.
+- No chase leash or return-to-post — a player repeatedly stepping just
+  inside then outside `detection_range` (140px) could in principle nudge
+  the enemy away from its patrol zone over time. Not fixed; not likely to
+  matter until levels are less contrived than this test arena.
+
+### How to test
+
+1. Run the project (F5), walk to the enemy on FloorB — it should be
+   visibly pacing back and forth near where it used to just stand still.
+2. Approach until it notices you (it turns and moves toward you) before
+   it's close enough to actually swing.
+3. Back away past its detection range — it should stop chasing and
+   resume patrolling rather than following forever or freezing in place.
+
+### Validation performed by the assistant
+
+- `godot --headless --path . --import` / `--quit-after 120` — both clean,
+  no errors, with the enemy patrolling for the full boot window.
+- Wrote a throwaway real-engine-loop test (not committed): watched the
+  enemy patrol on its own (player kept far away) and confirmed it reached
+  close to its right patrol bound (~957 of an expected ~960) and reversed
+  direction; teleported the player to within `detection_range` but
+  outside `attack_range` and confirmed the enemy's velocity switched to
+  moving toward the player; teleported the player far away again and
+  confirmed the enemy kept moving (not frozen) rather than getting stuck
+  in a chase state — consistent with the code's `to_player_dist <=
+  detection_range` check correctly falling through to patrol.
+- **Not yet verified:** movement "feel" (patrol pacing readability, chase
+  speed relative to the player, whether being chased while also fighting
+  the training dummy or standing near the gap edge causes any issue) —
+  needs a manual play session.
+
 ## Next Milestone (not started, awaiting direction)
 
 To be defined — likely candidates: Veyr Step (still needs its mechanics
-defined, not just implemented), enemy movement (patrol/chase), or a
-second enemy variant. Do not start without explicit approval.
+defined, not just implemented), a second enemy variant, or wiring player
+death/game-over handling (flagged as a gap since Step 6). Do not start
+without explicit approval.

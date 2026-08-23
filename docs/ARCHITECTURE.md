@@ -127,12 +127,19 @@ Mirrors the player's Controller/component split:
 - **`scripts/enemies/EnemyController.gd`** — applies gravity, calls
   `EnemyAI.physics_update()`, and owns this enemy's hit-flash/death-fade
   feedback (on `HealthComponent.died`: fade out, then `queue_free()`).
-- **`scripts/enemies/EnemyAI.gd`** — the only implemented behavior so far:
-  stationary, detects the player (via the `"player"` group, which
-  `Player.tscn` adds itself to) within `detection_range`, faces them, and
-  performs a telegraphed attack (own `Hitbox`) within `attack_range` on a
-  cooldown. **No movement/chase/patrol yet** — deliberately deferred, see
-  [PROGRESS.md](PROGRESS.md).
+- **`scripts/enemies/EnemyAI.gd`** — patrols back and forth within
+  `patrol_distance` of its spawn point; when the player (found via the
+  `"player"` group) enters `detection_range` it chases instead; within
+  `attack_range` it performs a telegraphed attack (own `Hitbox`, standing
+  still) on a cooldown. Exposes `move_velocity_x` each frame, which
+  `EnemyController` applies to `velocity.x` before `move_and_slide()` —
+  `EnemyAI` never touches the body's `CharacterBody2D` API directly.
+  **No ledge/edge detection** — patrol and chase both rely on being
+  placed somewhere with enough clear floor; an enemy patrolling near a
+  ledge could walk off it. Chase has no leash/return-to-post behavior —
+  a player could in principle nudge it away from its patrol zone by
+  repeatedly stepping just inside then outside `detection_range`. Both
+  are acceptable for a first pass, not fixed here.
 
 This is the first enemy in the project. `BossController` and any shared
 `EnemyController` base behavior beyond this one enemy don't exist yet —
@@ -194,5 +201,6 @@ concern):
   flagging so it isn't forgotten once enemies deal real pressure.
 - Falling off the test arena has no death/respawn handling — out of scope
   until health/save systems exist.
-- Only one enemy type exists — no patrol/chase movement, no ranged/varied
-  attacks, no `BossController`.
+- Only one enemy type exists — no ranged/varied attacks, no
+  `BossController`. It patrols/chases (see §4) but has no ledge detection
+  or chase leash.

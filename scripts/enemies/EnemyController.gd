@@ -1,9 +1,10 @@
 extends CharacterBody2D
 class_name EnemyController
-## Root controller for the first (minimal, stationary) enemy. Applies
-## gravity and delegates behavior to EnemyAI, matching the
-## Controller/component split used for the player. Handles the hit-flash
-## and death (fade + queue_free) feedback for this enemy specifically.
+## Root controller for the first enemy. Applies gravity, takes horizontal
+## velocity from EnemyAI (patrol/chase/attack), and delegates behavior to
+## it, matching the Controller/component split used for the player.
+## Handles the hit-flash and death (fade + queue_free) feedback for this
+## enemy specifically.
 
 @export var gravity: float = 1400.0
 
@@ -35,6 +36,7 @@ func _physics_process(delta: float) -> void:
 		velocity.y += gravity * delta
 
 	ai.physics_update(delta)
+	velocity.x = ai.move_velocity_x
 	move_and_slide()
 
 	_hurt_flash_timer = maxf(_hurt_flash_timer - delta, 0.0)
