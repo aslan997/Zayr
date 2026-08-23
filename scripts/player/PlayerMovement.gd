@@ -43,12 +43,14 @@ var just_wall_jumped: bool = false
 var is_dashing: bool = false
 var dash_is_air: bool = false
 var air_dash_available: bool = true
+## 1.0 = facing right, -1.0 = facing left. Public so other components
+## (PlayerCombat, future animation) can read Zayr's current facing.
+var facing: float = 1.0
 
 var _coyote_timer: float = 0.0
 var _jump_buffer_timer: float = 0.0
 var _wall_jump_lock_timer: float = 0.0
 var _wall_normal_x: float = 0.0
-var _facing: float = 1.0
 var _dash_timer: float = 0.0
 var _dash_cooldown_timer: float = 0.0
 var _dash_direction: float = 1.0
@@ -60,7 +62,7 @@ func physics_update(delta: float, move_input: float, jump_just_pressed: bool, da
 	_dash_cooldown_timer = max(_dash_cooldown_timer - delta, 0.0)
 
 	if move_input != 0.0:
-		_facing = signf(move_input)
+		facing = signf(move_input)
 
 	var on_floor: bool = body.is_on_floor()
 
@@ -107,7 +109,7 @@ func _start_dash(on_floor: bool) -> void:
 	is_dashing = true
 	dash_is_air = not on_floor
 	_dash_timer = dash_duration
-	_dash_direction = _facing
+	_dash_direction = facing
 	if not on_floor:
 		air_dash_available = false
 

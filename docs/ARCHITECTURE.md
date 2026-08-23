@@ -71,8 +71,10 @@ This split exists so that combat, health, and abilities can be added later as
 additional sibling components without `PlayerController.gd` or
 `PlayerMovement.gd` growing to absorb their responsibilities. `HealthComponent`,
 `VeyrComponent`, and a `Hurtbox` (all in `scripts/combat/`, reusable beyond
-the player) are now attached this way — see [COMBAT.md](COMBAT.md) §6.
-`PlayerCombat.gd`/`PlayerAbilities.gd` don't exist yet.
+the player) are attached this way, and **`PlayerCombat.gd`** (Zayr's first
+Veyr Edge attack) follows the same `physics_update()`-called-from-controller
+pattern as `PlayerMovement.gd` — see [COMBAT.md](COMBAT.md) §6.
+`PlayerAbilities.gd` doesn't exist yet.
 
 ### State Machine
 
@@ -80,10 +82,10 @@ the player) are now attached this way — see [COMBAT.md](COMBAT.md) §6.
 states needed so far are implemented:
 
 ```
-IDLE, RUN, JUMP, FALL, WALL_SLIDE, DASH, AIR_DASH
+IDLE, RUN, JUMP, FALL, WALL_SLIDE, DASH, AIR_DASH, ATTACK_1
 ```
 
-The remaining eventual states (`ATTACK_1/2/3, HEAVY_ATTACK, CHARGING, HURT,
+The remaining eventual states (`ATTACK_2/3, HEAVY_ATTACK, CHARGING, HURT,
 DEAD, EMBER, VEIL`) are **not** implemented yet. States are derived from
 movement output each physics frame — the enum can be extended without
 restructuring the controller, since transitions are just a `match` on
@@ -142,6 +144,7 @@ concern):
 - `move_right` — D / Right Arrow
 - `jump` — Space
 - `dash` — Left Shift
+- `attack` — J
 
 ## 7. Known Gaps / Not Yet Decided
 

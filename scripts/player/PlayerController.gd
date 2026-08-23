@@ -4,7 +4,7 @@ class_name PlayerController
 ## the Movement component. Combat/health/abilities will be added later as
 ## sibling components without this file absorbing their responsibilities.
 
-enum State { IDLE, RUN, JUMP, FALL, WALL_SLIDE, DASH, AIR_DASH }
+enum State { IDLE, RUN, JUMP, FALL, WALL_SLIDE, DASH, AIR_DASH, ATTACK_1 }
 
 ## Temporary debug tint per state, so state transitions are visible before
 ## real animations exist. Safe to delete once an AnimationPlayer/AnimatedSprite
@@ -17,9 +17,11 @@ const STATE_DEBUG_COLOR: Dictionary = {
 	State.WALL_SLIDE: Color(0.8, 0.4, 0.9),
 	State.DASH: Color(1.0, 1.0, 1.0),
 	State.AIR_DASH: Color(1.0, 0.95, 0.2),
+	State.ATTACK_1: Color(0.3, 0.95, 0.85),
 }
 
 @onready var movement: PlayerMovement = $Movement
+@onready var combat: PlayerCombat = $Combat
 @onready var _debug_visual: Polygon2D = $Visual
 
 var state: State = State.IDLE
@@ -29,8 +31,10 @@ func _physics_process(delta: float) -> void:
 	var move_input: float = Input.get_axis("move_left", "move_right")
 	var jump_just_pressed: bool = Input.is_action_just_pressed("jump")
 	var dash_just_pressed: bool = Input.is_action_just_pressed("dash")
+	var attack_just_pressed: bool = Input.is_action_just_pressed("attack")
 
 	movement.physics_update(delta, move_input, jump_just_pressed, dash_just_pressed)
+	combat.physics_update(delta, attack_just_pressed)
 
 	_update_state(move_input)
 	_update_debug_visual()
@@ -39,6 +43,8 @@ func _physics_process(delta: float) -> void:
 func _update_state(move_input: float) -> void:
 	if movement.is_dashing:
 		state = State.AIR_DASH if movement.dash_is_air else State.DASH
+	elif combat.is_attacking:
+		state = State.ATTACK_1
 	elif movement.is_wall_sliding:
 		state = State.WALL_SLIDE
 	elif not is_on_floor():
@@ -54,8 +60,7 @@ func _update_debug_visual() -> void:
 		return
 	_debug_visual.color = STATE_DEBUG_COLOR.get(state, Color.WHITE)
 	# Flip only the visual, not the CharacterBody2D itself - flipping the
-	# root's scale would also mirror the child Camera2D's view.
-	if velocity.x < -1.0:
-		_debug_visual.scale.x = -1.0
-	elif velocity.x > 1.0:
-		_debug_visual.scale.x = 1.0
+	# root's scale would also mirror the child Camera2D's view. Uses
+	# movement.facing (not instantaneous velocity) so it matches the
+	# direction PlayerCombat aims the Hitbox, including while standing still.
+	_debug_visual.scale.x = movement.facing

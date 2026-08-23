@@ -201,8 +201,87 @@ milestone is what will make them observable in play.
   a second activation while still overlapping (confirms reactivation
   correctly allows a fresh hit).
 
+## Milestone: Combat Prototype — Step 4 (First Veyr Edge Attack)
+
+**Status: implemented, headless-validated end-to-end (walk → attack →
+damage → hitstop through the real engine loop), needs manual play-test.**
+
+User said "continue" without picking between the two offered options
+(Veyr Step vs. a first Veyr Edge attack). Went with the Veyr Edge attack:
+Veyr Step's mechanics aren't specified beyond its name in the brief, so
+building it now would mean inventing design rather than implementing
+agreed design — against the project's own rules. The Veyr Edge attack, by
+contrast, already has real spec in [COMBAT.md](COMBAT.md) (appears on
+attack, dissolves when inactive, geometric/energetic, "Edge" is one of its
+named forms) and the Hitbox/Hurtbox primitives from Step 3 were built
+exactly for this.
+
+### What changed
+
+- `scripts/player/PlayerCombat.gd` — new sibling component (same
+  `physics_update()`-from-controller pattern as `PlayerMovement`). Reads
+  `attack` input, drives a windup/active/recovery timeline, positions and
+  activates the `Hitbox` in Zayr's facing direction, fades a placeholder
+  swing visual, and applies a brief hitstop (`Engine.time_scale` dip,
+  auto-restored) on a landed hit.
+- `scenes/player/Player.tscn` — added a `Combat` node and a `Hitbox` (with
+  a `SwingVisual` polygon child — the "Edge" form only, per
+  [COMBAT.md](COMBAT.md) §2: not all forms are implemented at once).
+- `scripts/player/PlayerController.gd` — added `ATTACK_1` state, reads the
+  `attack` input; the debug-visual facing flip now uses
+  `movement.facing` instead of instantaneous velocity, so it's correct
+  even while standing still and attacking.
+- `scripts/player/PlayerMovement.gd` — `_facing` renamed to public
+  `facing` so `PlayerCombat` (and the controller's debug flip) can read
+  Zayr's aim direction. No behavior change.
+- `project.godot` — added `attack` input action (J).
+- `scenes/regions/TestArena.tscn` — added a **training dummy** test
+  fixture (`TrainingDummy`, with its own embedded/inline script, not a
+  reusable class) near the player's spawn: a `HealthComponent` +
+  `Hurtbox` target that flashes on hit and resets its own health, purely
+  so the new attack has something to visibly land on. This is explicitly
+  a debug fixture, not a real enemy/interactable — delete it when actual
+  enemies exist.
+
+### Known simplification
+
+The attack doesn't lock or interrupt movement/dash — both systems run
+independently right now. Combo/interrupt rules aren't designed yet
+(see [COMBAT.md](COMBAT.md) §6), so this wasn't invented; revisit when
+they are.
+
+### How to test
+
+1. Run the project (F5).
+2. Walk right to the red training dummy near the start.
+3. Press J to swing — a cyan blade shape flashes in Zayr's facing
+   direction, the debug rectangle turns teal, and on a landed hit the game
+   briefly slows (hitstop) and the dummy flashes white before its color
+   returns to red (health is invisible for now — no UI yet).
+4. Facing works stationary too: turn to face the dummy without moving,
+   then attack.
+
+### Validation performed by the assistant
+
+- `godot --headless --path . --import` — clean; all 8 classes (including
+  the new `PlayerCombat`) register as global classes.
+- `godot --headless --path . --quit-after 60` — clean, no runtime errors.
+- Wrote a throwaway full-stack headless test (not committed) that loaded
+  the **actual `TestArena.tscn`**, held `move_right` (reacting to
+  `player.position.x` rather than a fixed frame count — see the Step 2
+  lesson about idle/physics frame decoupling in headless mode) until Zayr
+  was in range of the dummy, pressed `attack`, and measured results
+  through the real engine loop: dummy health went exactly 60 → 48 (the
+  scene's configured 12 damage, once, not more), `Engine.time_scale`
+  dipped to the configured 0.05 during the hit and was confirmed restored
+  to 1.0 afterward.
+- **Not yet verified:** attack "feel" (windup/active/recovery timing,
+  hitstop strength/duration, whether independent dash/attack feels wrong
+  in practice) — needs a manual play session.
+
 ## Next Milestone (not started, awaiting direction)
 
-To be defined — likely candidates: Veyr Step, or a first Veyr Edge attack
-(which would now build on the Hitbox/Hurtbox primitives above). Do not
-start without explicit approval.
+To be defined — likely candidates: the 3-hit combo (`ATTACK_2`/`ATTACK_3`),
+Veyr Step, or a first enemy (which would need at least a minimal
+EnemyController/EnemyAI, currently nonexistent). Do not start without
+explicit approval.

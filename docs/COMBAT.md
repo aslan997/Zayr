@@ -67,7 +67,28 @@ The items above beyond Hitbox/Hurtbox are not built yet.
 
 ## 6. Status
 
-**Combat primitives skeleton implemented, no attacks/enemies yet.**
+**First Veyr Edge attack implemented (a single swing, not the 3-hit combo
+yet). No enemies exist — validated against a training-dummy test fixture,
+see [PROGRESS.md](PROGRESS.md).**
+
+- `PlayerCombat` (`scripts/player/PlayerCombat.gd`) — reads the `attack`
+  input, drives a windup → active → recovery timeline (all `@export`
+  tunable), positions/activates a `Hitbox` in Zayr's facing direction, and
+  applies a brief hitstop (via `Engine.time_scale`, restored afterward) on
+  a landed hit.
+- Placeholder Veyr Edge visual: a simple geometric polygon (the "Edge"
+  form only — Spear/Crescent/Lance are not implemented) that appears for
+  the swing and fades out. No shader/particles yet — flagged as
+  placeholder, not final VFX.
+- **Not implemented, deliberately out of scope for this pass:** combo
+  chaining (`ATTACK_2`/`ATTACK_3`), heavy/charged attacks, aerial attacks,
+  the ranged Veyr attack, Veyr Step, Perfect Step, stagger/stability,
+  screen shake, enemy telegraphs.
+- **Known simplification:** the attack does not lock or cancel movement/
+  dash — they run independently. Revisit once combo/interrupt rules are
+  actually designed; not invented here.
+
+### Previous status (combat primitives skeleton)
 
 - `HealthComponent` (`scripts/combat/HealthComponent.gd`) — generic health
   pool (`take_damage`, `heal`, `died` signal). Attached to Zayr.
