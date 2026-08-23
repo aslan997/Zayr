@@ -1,8 +1,11 @@
-[gd_scene load_steps=5 format=3]
+[gd_scene load_steps=8 format=3]
 
 [ext_resource type="Script" path="res://scripts/player/PlayerController.gd" id="1_ctrl"]
 [ext_resource type="Script" path="res://scripts/player/PlayerMovement.gd" id="2_move"]
 [ext_resource type="Script" path="res://scripts/systems/CameraController.gd" id="3_cam"]
+[ext_resource type="Script" path="res://scripts/combat/HealthComponent.gd" id="4_health"]
+[ext_resource type="Script" path="res://scripts/combat/VeyrComponent.gd" id="5_veyr"]
+[ext_resource type="Script" path="res://scripts/combat/Hurtbox.gd" id="6_hurtbox"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_body"]
 size = Vector2(28, 46)
@@ -26,3 +29,19 @@ script = ExtResource("2_move")
 [node name="Camera2D" type="Camera2D" parent="."]
 position_smoothing_speed = 8.0
 script = ExtResource("3_cam")
+
+[node name="HealthComponent" type="Node" parent="."]
+script = ExtResource("4_health")
+
+[node name="VeyrComponent" type="Node" parent="."]
+script = ExtResource("5_veyr")
+
+[node name="Hurtbox" type="Area2D" parent="."]
+collision_layer = 8
+collision_mask = 0
+script = ExtResource("6_hurtbox")
+health_component_path = NodePath("../HealthComponent")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Hurtbox"]
+position = Vector2(0, -23)
+shape = SubResource("RectangleShape2D_body")

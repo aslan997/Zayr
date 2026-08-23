@@ -54,17 +54,34 @@ sources. Exact regeneration/cost balance is not yet determined.
 Once combat implementation begins, expect:
 
 - **Hitbox / Hurtbox** components (separate, composable, per
-  [ARCHITECTURE.md](ARCHITECTURE.md) principles)
+  [ARCHITECTURE.md](ARCHITECTURE.md) principles) — **implemented as
+  reusable primitives**, see §6.
 - Stagger / stability system for enemies
-- Explicit attack timing windows
+- Explicit attack timing windows — the `Hitbox.activate()`/`deactivate()`
+  window is the primitive this will build on
 - Hitstop on impactful hits
 - Controlled, restrained screen shake
 - Readable enemy telegraphs
 
-None of this is built yet. This section exists so implementation direction
-is agreed before code is written.
+The items above beyond Hitbox/Hurtbox are not built yet.
 
 ## 6. Status
 
-No combat code exists. See [PROGRESS.md](PROGRESS.md) for current milestone
-status — the present milestone is movement-only, no combat.
+**Combat primitives skeleton implemented, no attacks/enemies yet.**
+
+- `HealthComponent` (`scripts/combat/HealthComponent.gd`) — generic health
+  pool (`take_damage`, `heal`, `died` signal). Attached to Zayr.
+- `VeyrComponent` (`scripts/combat/VeyrComponent.gd`) — Veyr resource pool
+  (`spend`, `add`). **Regeneration rules are intentionally not
+  implemented** — §4 above ("regenerates through active combat") isn't
+  specific enough to build from yet; this only exposes the manual pool
+  API. Attached to Zayr.
+- `Hitbox` / `Hurtbox` (`scripts/combat/Hitbox.gd`, `Hurtbox.gd`) —
+  `Area2D`-based. A `Hurtbox` reports hits to its owner's
+  `HealthComponent`; a `Hitbox` starts disabled and only deals damage
+  between `activate()`/`deactivate()`, and won't hit the same `Hurtbox`
+  twice within one activation window. Zayr has a `Hurtbox` wired to his
+  `HealthComponent`. **No `Hitbox` exists yet anywhere** — that requires
+  an actual attack (Veyr Edge) to drive it, which is out of scope here.
+- No enemies, no damage sources, no death handling, no UI. See
+  [PROGRESS.md](PROGRESS.md) for validation performed.

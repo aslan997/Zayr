@@ -68,9 +68,11 @@ The player is built with composition, split by responsibility:
   controller. Knows nothing about state machine, combat, or input mapping.
 
 This split exists so that combat, health, and abilities can be added later as
-additional sibling components (`PlayerCombat.gd`, `HealthComponent.gd`,
-`VeyrComponent.gd`, `PlayerAbilities.gd`) without `PlayerController.gd` or
-`PlayerMovement.gd` growing to absorb their responsibilities.
+additional sibling components without `PlayerController.gd` or
+`PlayerMovement.gd` growing to absorb their responsibilities. `HealthComponent`,
+`VeyrComponent`, and a `Hurtbox` (all in `scripts/combat/`, reusable beyond
+the player) are now attached this way — see [COMBAT.md](COMBAT.md) §6.
+`PlayerCombat.gd`/`PlayerAbilities.gd` don't exist yet.
 
 ### State Machine
 
@@ -123,9 +125,13 @@ Defined in Project Settings → Layer Names → 2D Physics:
 
 - Layer 1: `world`
 - Layer 2: `player`
+- Layer 3: `hitbox`
+- Layer 4: `hurtbox`
 
-Additional layers (enemy, hitbox, hurtbox, interactable) will be added when
-those systems are implemented — not yet needed.
+A `Hitbox` monitors layer 4 (`collision_mask = 8`) and lives on layer 3;
+a `Hurtbox` lives on layer 4, is monitorable, and does not itself monitor
+anything (`collision_mask = 0`). Additional layers (enemy, interactable)
+will be added when those systems are implemented — not yet needed.
 
 ## 6. Input Map
 

@@ -145,8 +145,64 @@ that post-dash momentum decays naturally rather than hard-resetting).
   whether the momentum-carry after a dash ends feels right) — needs a
   manual play session.
 
+## Milestone: Combat Prototype — Step 3 (Combat Primitives Skeleton)
+
+**Status: implemented, headless-validated (including a real-engine-loop
+functional test of the damage flow), needs manual play-test in editor.**
+
+Player confirmed Step 2 ("slide and dash working fine"), then chose this
+as the next step from three options (combat primitives skeleton, Veyr
+Step, or jumping straight to a Veyr Edge attack) — this one picked as the
+foundational, lowest-risk choice.
+
+### What changed
+
+- `scripts/combat/HealthComponent.gd` — generic health pool
+  (`take_damage`, `heal`, `is_dead`, `health_changed`/`damaged`/`died`
+  signals). Not player-specific — reusable for enemies/bosses later.
+- `scripts/combat/VeyrComponent.gd` — Veyr resource pool (`spend`, `add`,
+  `veyr_changed` signal). **No regeneration logic** — the brief's "Veyr
+  regenerates through active combat" isn't specific enough to implement
+  yet (exact balance explicitly TBD per [COMBAT.md](COMBAT.md) §4); adding
+  regen rules now would mean inventing a mechanic, not implementing a
+  specified one. Flagging this rather than guessing.
+- `scripts/combat/Hitbox.gd` / `Hurtbox.gd` — `Area2D` primitives. Hitbox
+  starts disabled, only deals damage inside an `activate()`/`deactivate()`
+  window, and can't multi-hit the same Hurtbox within one window. Hurtbox
+  reports hits to its owner's `HealthComponent` via an exported NodePath.
+- `project.godot` — added collision layers 3 (`hitbox`) and 4 (`hurtbox`).
+- `scenes/player/Player.tscn` — added `HealthComponent`, `VeyrComponent`,
+  and a `Hurtbox` (wired to the `HealthComponent`) as sibling nodes, per
+  [ARCHITECTURE.md](ARCHITECTURE.md)'s composition pattern. **No `Hitbox`
+  anywhere yet** — nothing exists to trigger one (that's the Veyr Edge
+  milestone, out of scope here). No enemies exist either, so none of this
+  is reachable from actual play yet — it's foundation only.
+
+### How to test
+
+Nothing is player-visible yet — there's no attack, no enemy, no UI showing
+health/Veyr. Running the project should look identical to Step 2. The
+components exist and are wired correctly (verified below); the next combat
+milestone is what will make them observable in play.
+
+### Validation performed by the assistant
+
+- `godot --headless --path . --import` — clean; `HealthComponent`,
+  `VeyrComponent`, `Hitbox`, `Hurtbox` all register as global classes.
+- `godot --headless --path . --quit-after 60` — clean, no runtime errors
+  (confirms the new Player.tscn nodes and the Hurtbox's NodePath to
+  HealthComponent resolve correctly).
+- Wrote a throwaway headless test (not committed, following the
+  real-engine-loop lesson from Step 2) that spawned the actual Player
+  scene plus a standalone `Hitbox`, overlapped it with Zayr's `Hurtbox`,
+  and drove `activate()`/`deactivate()` through real physics frames:
+  health went 100 → 75 after a 5-frame-long activation window (one hit of
+  25 damage, not five — confirms the multi-hit guard works), then → 50 on
+  a second activation while still overlapping (confirms reactivation
+  correctly allows a fresh hit).
+
 ## Next Milestone (not started, awaiting direction)
 
-To be defined — likely candidates per the GDD's incremental scope: a first
-pass at the Veyr Edge combat primitives (Hitbox/Hurtbox, HealthComponent),
-or Veyr Step. Do not start without explicit approval.
+To be defined — likely candidates: Veyr Step, or a first Veyr Edge attack
+(which would now build on the Hitbox/Hurtbox primitives above). Do not
+start without explicit approval.
