@@ -8,6 +8,12 @@ signal hit_received(damage: float, hitbox: Hitbox)
 
 @export var health_component_path: NodePath
 
+## The entity this Hurtbox belongs to (its parent) - lets a Hitbox refuse
+## to hit a Hurtbox owned by the same entity as itself. Both Hitbox and
+## Hurtbox are always direct children of their owning body, matching how
+## Player.tscn and Enemy.tscn are structured.
+@onready var owner_body: Node = get_parent()
+
 var _health: HealthComponent
 
 

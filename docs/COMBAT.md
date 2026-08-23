@@ -1,8 +1,8 @@
 # Zayr — Combat Design
 
-Combat design and implementation rules. **No combat is implemented yet** —
-this document records the agreed design so future implementation stays
-consistent with it. Update as combat milestones land.
+Combat design and implementation rules. This document records the agreed
+design so implementation stays consistent with it. Update as combat
+milestones land — see [PROGRESS.md](PROGRESS.md) for current status.
 
 ## 1. Philosophy
 
@@ -54,21 +54,36 @@ sources. Exact regeneration/cost balance is not yet determined.
 Once combat implementation begins, expect:
 
 - **Hitbox / Hurtbox** components (separate, composable, per
-  [ARCHITECTURE.md](ARCHITECTURE.md) principles) — **implemented as
-  reusable primitives**, see §6.
-- Stagger / stability system for enemies
-- Explicit attack timing windows — the `Hitbox.activate()`/`deactivate()`
-  window is the primitive this will build on
-- Hitstop on impactful hits
-- Controlled, restrained screen shake
-- Readable enemy telegraphs
-
-The items above beyond Hitbox/Hurtbox are not built yet.
+  [ARCHITECTURE.md](ARCHITECTURE.md) principles) — **implemented**, see §6.
+- **Explicit attack timing windows** — `Hitbox.activate()`/`deactivate()`,
+  used by both the player's combo and the first enemy — **implemented**.
+- **Hitstop on impactful hits** — **implemented** for the player's attacks
+  (`Engine.time_scale` dip). Not yet applied to the enemy hitting the
+  player.
+- **Readable enemy telegraphs** — **implemented**, minimally: the first
+  enemy has a slow windup before its hitbox opens, per its own
+  `@export`-tunable timing.
+- Stagger / stability system for enemies — not built yet.
+- Controlled, restrained screen shake — not built yet.
 
 ## 6. Status
 
-**Veyr Edge 3-hit combo implemented. No enemies exist — validated against
-a training-dummy test fixture, see [PROGRESS.md](PROGRESS.md).**
+**Veyr Edge 3-hit combo implemented, and the first enemy exists and can
+both hit and be hit by the player. See [PROGRESS.md](PROGRESS.md).**
+
+- A minimal first enemy (`scripts/enemies/EnemyController.gd` +
+  `EnemyAI.gd`, `scenes/enemies/Enemy.tscn`) is stationary, detects the
+  player, and performs its own telegraphed attack (reusing `Hitbox`) on a
+  cooldown when the player is close enough. It has a `HealthComponent` and
+  `Hurtbox` like the player, and is removed from the scene (after a brief
+  fade) when its health reaches 0. No patrol/chase movement, no varied
+  attacks, no `BossController` — see [ARCHITECTURE.md](ARCHITECTURE.md) §4.
+- Fixed a latent `Hitbox`/`Hurtbox` gap while adding the enemy: neither
+  had any owner-exclusion check, so an entity with both a `Hitbox` and a
+  `Hurtbox` (which the player already had, and the enemy now also has)
+  could in principle damage itself if its own hitbox and hurtbox
+  overlapped. Both now track an `owner_body` and `Hitbox` skips a
+  `Hurtbox` owned by the same body.
 
 - `PlayerCombat` (`scripts/player/PlayerCombat.gd`) — reads the `attack`
   input and plays 3 swings, each with its own `@export`-tunable

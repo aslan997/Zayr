@@ -1,8 +1,9 @@
-[gd_scene load_steps=13 format=3]
+[gd_scene load_steps=14 format=3]
 
 [ext_resource type="PackedScene" path="res://scenes/player/Player.tscn" id="1_player"]
 [ext_resource type="Script" path="res://scripts/combat/HealthComponent.gd" id="2_dummy_health"]
 [ext_resource type="Script" path="res://scripts/combat/Hurtbox.gd" id="3_dummy_hurtbox"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/Enemy.tscn" id="4_enemy"]
 
 [sub_resource type="RectangleShape2D" id="Shape_FloorA"]
 size = Vector2(560, 40)
@@ -65,6 +66,9 @@ limit_left = -50
 limit_top = -100
 limit_right = 2780
 limit_bottom = 650
+
+[node name="Enemy" parent="." instance=ExtResource("4_enemy")]
+position = Vector2(850, 568)
 
 [node name="TrainingDummy" type="Node2D" parent="."]
 position = Vector2(320, 568)

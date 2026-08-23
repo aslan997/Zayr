@@ -22,7 +22,7 @@ is organized. Update this when structural decisions are made.
 ├── project.godot
 ├── scenes/
 │   ├── player/          Player scene(s)
-│   ├── enemies/         Enemy scenes (not yet populated)
+│   ├── enemies/         Enemy scenes (Enemy.tscn - one enemy so far)
 │   ├── bosses/          Boss scenes (not yet populated)
 │   ├── regions/         Level/region scenes (test arena lives here for now)
 │   ├── ui/               UI scenes (not yet populated)
@@ -30,8 +30,8 @@ is organized. Update this when structural decisions are made.
 │
 ├── scripts/
 │   ├── player/          PlayerController, PlayerMovement, ...
-│   ├── combat/          Hitbox/Hurtbox and combat components (not yet populated)
-│   ├── enemies/         Enemy AI/controller scripts (not yet populated)
+│   ├── combat/          HealthComponent, VeyrComponent, Hitbox, Hurtbox
+│   ├── enemies/         EnemyController, EnemyAI
 │   ├── bosses/          Boss controller scripts (not yet populated)
 │   ├── systems/         Cross-cutting systems (camera, save, dialogue, memory, ...)
 │   └── ui/              UI scripts (not yet populated)
@@ -107,7 +107,39 @@ is included purely to make state transitions visible during manual testing
 before real animations exist. It is trivial to remove once animations are
 added.
 
-## 4. Camera
+### 3.1 Hitbox/Hurtbox Ownership
+
+`Hitbox` and `Hurtbox` (`scripts/combat/`) are always direct children of
+the entity that owns them (Zayr, an enemy). Both expose an `owner_body`
+(their `get_parent()`), and `Hitbox` refuses to hit a `Hurtbox` whose
+`owner_body` matches its own — this is what stops an entity damaging
+itself now that more than one entity (player + enemy) has both a `Hitbox`
+and a `Hurtbox`; it isn't enforced by collision layers, since every
+entity's Hitbox/Hurtbox share the same layers (see §6).
+
+## 4. Enemy Architecture
+
+Mirrors the player's Controller/component split:
+
+- **`scenes/enemies/Enemy.tscn`** — `CharacterBody2D` root, same shape/
+  layout conventions as `Player.tscn` (origin at feet, `HealthComponent`,
+  `Hurtbox`, `Hitbox` with a `SwingVisual` child).
+- **`scripts/enemies/EnemyController.gd`** — applies gravity, calls
+  `EnemyAI.physics_update()`, and owns this enemy's hit-flash/death-fade
+  feedback (on `HealthComponent.died`: fade out, then `queue_free()`).
+- **`scripts/enemies/EnemyAI.gd`** — the only implemented behavior so far:
+  stationary, detects the player (via the `"player"` group, which
+  `Player.tscn` adds itself to) within `detection_range`, faces them, and
+  performs a telegraphed attack (own `Hitbox`) within `attack_range` on a
+  cooldown. **No movement/chase/patrol yet** — deliberately deferred, see
+  [PROGRESS.md](PROGRESS.md).
+
+This is the first enemy in the project. `BossController` and any shared
+`EnemyController` base behavior beyond this one enemy don't exist yet —
+revisit once a second enemy type shows what's actually common between them,
+rather than guessing now.
+
+## 5. Camera
 
 - **`scripts/systems/CameraController.gd`** — attached to the `Camera2D`
   child of the player. Uses Godot's built-in `position_smoothing_enabled`
@@ -121,7 +153,7 @@ added.
   Instead each region scene (e.g. `TestArena.tscn`) overrides the limit
   values on the instanced player's `Camera2D` node for that region.
 
-## 5. Collision Layers
+## 6. Collision Layers
 
 Defined in Project Settings → Layer Names → 2D Physics:
 
@@ -129,13 +161,19 @@ Defined in Project Settings → Layer Names → 2D Physics:
 - Layer 2: `player`
 - Layer 3: `hitbox`
 - Layer 4: `hurtbox`
+- Layer 5: `enemy`
 
 A `Hitbox` monitors layer 4 (`collision_mask = 8`) and lives on layer 3;
 a `Hurtbox` lives on layer 4, is monitorable, and does not itself monitor
-anything (`collision_mask = 0`). Additional layers (enemy, interactable)
-will be added when those systems are implemented — not yet needed.
+anything (`collision_mask = 0`). Every entity's `Hitbox` and `Hurtbox`
+share the same layers 3/4 — a `Hitbox` refusing to hit a `Hurtbox` owned
+by the same parent node (see §3.1) is what stops an entity from hitting
+itself, not layer separation. `Enemy` bodies physically collide with
+`world` only (`collision_mask = 1`), not with the player, so they don't
+push each other around. Additional layers (interactable) will be added
+when needed.
 
-## 6. Input Map
+## 7. Input Map
 
 Defined actions (keyboard only for now — gamepad remapping is a later
 concern):
@@ -146,10 +184,15 @@ concern):
 - `dash` — Left Shift
 - `attack` — J
 
-## 7. Known Gaps / Not Yet Decided
+## 8. Known Gaps / Not Yet Decided
 
 - No save system yet.
-- No health/damage/combat components yet.
 - No animation system yet (placeholder geometry only).
+- No player death/game-over handling — `HealthComponent.died` exists and
+  works (the enemy uses it), but nothing is wired to it on the player.
+  Health is generous by default so this hasn't mattered in testing yet;
+  flagging so it isn't forgotten once enemies deal real pressure.
 - Falling off the test arena has no death/respawn handling — out of scope
   until health/save systems exist.
+- Only one enemy type exists — no patrol/chase movement, no ranged/varied
+  attacks, no `BossController`.

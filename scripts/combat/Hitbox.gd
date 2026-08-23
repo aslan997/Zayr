@@ -9,6 +9,10 @@ signal hit_landed(hurtbox: Hurtbox)
 
 @export var damage: float = 10.0
 
+## The entity this Hitbox belongs to (its parent) - a Hurtbox owned by the
+## same entity is ignored, so an entity can never hit itself.
+@onready var owner_body: Node = get_parent()
+
 ## Hurtboxes already hit during the current activation, so one swing can't
 ## multi-hit the same target across several overlapping physics frames.
 var _hit_this_activation: Array[Hurtbox] = []
@@ -30,7 +34,7 @@ func deactivate() -> void:
 
 
 func _on_area_entered(area: Area2D) -> void:
-	if area is Hurtbox and area not in _hit_this_activation:
+	if area is Hurtbox and area not in _hit_this_activation and area.owner_body != owner_body:
 		_hit_this_activation.append(area)
 		area.receive_hit(damage, self)
 		hit_landed.emit(area)

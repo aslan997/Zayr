@@ -337,9 +337,93 @@ original project brief until called for on their own).
   swings in a row reads well with only color as feedback, hitstop
   stacking across 3 hits) — needs a manual play session.
 
+## Milestone: Combat Prototype — Step 6 (First Enemy)
+
+**Status: implemented, headless-validated end-to-end (player takes a hit,
+kills the enemy, enemy is actually removed from the tree), needs manual
+play-test.**
+
+User said "continue" a third time without picking between the two
+remaining options (Veyr Step or a first enemy). Went with the enemy:
+Veyr Step still has no defined mechanics beyond its name (same reason it
+was skipped in Steps 4 and 5); `EnemyController`/`EnemyAI` were already
+named in the project's declared architecture, and this is a generic,
+unnamed enemy — no lore/characters invented, those stay reserved. Note
+that the *original* project brief explicitly excluded enemies from "this
+milestone" — but that exclusion was scoped to the movement-only first
+pass, and the project has since grown into full Veyr combat with explicit
+approval at every step (dash → combat primitives → first attack → 3-hit
+combo); an enemy to actually use that combat on is the natural next piece,
+not scope creep past what's been agreed along the way.
+
+### What changed
+
+- `scripts/combat/Hitbox.gd` / `Hurtbox.gd` — **bug fix**: added
+  `owner_body` tracking so a `Hitbox` never hits a `Hurtbox` belonging to
+  the same entity. Not reachable before (only the player had both), but
+  became a real risk the moment a second entity has both — fixed
+  proactively rather than waiting to see it happen. See
+  [ARCHITECTURE.md](ARCHITECTURE.md) §3.1.
+- `scripts/enemies/EnemyController.gd`, `EnemyAI.gd` (new) +
+  `scenes/enemies/Enemy.tscn` (new) — the first enemy. Stationary, detects
+  the player via the `"player"` group within `detection_range`, and
+  performs a telegraphed attack (windup → active → recovery, reusing
+  `Hitbox`) within `attack_range` on a cooldown, all `@export`-tunable, no
+  values from the brief (placeholder balance, flagged). On death
+  (`HealthComponent.died`): brief fade, then `queue_free()`.
+- `scenes/player/Player.tscn` — added to the `"player"` group so `EnemyAI`
+  can find it without a hardcoded path.
+- `scripts/player/PlayerController.gd` — added a brief white hit-flash on
+  the debug visual when Zayr's own `HealthComponent` takes damage, so an
+  enemy hit is visible (no hurt animation/UI yet).
+- `project.godot` — added collision layer 5 (`enemy`) for the enemy's
+  physical body (collides with `world` only, not the player).
+- `scenes/regions/TestArena.tscn` — placed the enemy on FloorB, past the
+  jump gap from the dash/movement testing.
+
+### Known gap (flagged, not fixed here)
+
+Player death has no handling — `HealthComponent.died` works (verified via
+the enemy), but nothing is connected to it on the player. Out of scope for
+this pass; noted in [ARCHITECTURE.md](ARCHITECTURE.md) §8 so it isn't
+forgotten.
+
+### How to test
+
+1. Run the project (F5), walk right — hop over the gap after the training
+   dummy to reach FloorB.
+2. A purple enemy stands further along. Get close enough and it'll wind
+   up (visible delay) then swing an orange-red blade — if it connects,
+   Zayr's debug rectangle flashes white.
+3. Fight back with the combo (J, chained) — the enemy flashes on each
+   hit and, once its health is depleted, fades out and disappears.
+
+### Validation performed by the assistant
+
+- `godot --headless --path . --import` — clean; `EnemyController` and
+  `EnemyAI` register as global classes alongside the existing 8.
+- `godot --headless --path . --quit-after 90` — clean, no runtime errors
+  with the enemy present and idling.
+- Wrote a throwaway full-stack headless test (not committed) that walked
+  Zayr across the FloorA→FloorB gap (state-reactive jump timing, not a
+  fixed frame count — the gap-crossing bug this test itself hit on the
+  first attempt, see below), into the enemy's range: the enemy attacked
+  first (player health 100 → 90, matching its configured damage), then
+  Zayr's combo killed it (enemy health 40 → 28 → 16 → dead), and the test
+  confirmed the enemy node was actually gone (`is_instance_valid` false)
+  afterward, not just visually hidden.
+- **Debugging note kept for future reference:** the test's first two
+  attempts failed because the test itself walked straight through the
+  movement-testing gap without jumping, dropping the player thousands of
+  pixels into the void — a test bug, not a game bug, but worth remembering
+  that any future headless test walking toward FloorB needs to clear that
+  gap.
+- **Not yet verified:** enemy encounter "feel" (telegraph readability,
+  whether the cooldown/pacing feels fair, whether fighting near the gap
+  edge causes movement issues) — needs a manual play session.
+
 ## Next Milestone (not started, awaiting direction)
 
-To be defined — likely candidates: Veyr Step (would need its mechanics
-defined first — not just a name), or a first enemy (needs a new
-EnemyController/EnemyAI, which doesn't exist yet). Do not start without
-explicit approval.
+To be defined — likely candidates: Veyr Step (still needs its mechanics
+defined, not just implemented), enemy movement (patrol/chase), or a
+second enemy variant. Do not start without explicit approval.

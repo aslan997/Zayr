@@ -23,12 +23,21 @@ const STATE_DEBUG_COLOR: Dictionary = {
 }
 ## Combo index (PlayerCombat.combo_index) -> the matching attack state.
 const COMBO_STATE: Array[State] = [State.ATTACK_1, State.ATTACK_2, State.ATTACK_3]
+## Brief white flash on the debug visual when Zayr takes damage, so a hit
+## from an enemy is visible before real hurt animations/UI exist.
+const HURT_FLASH_DURATION: float = 0.1
 
 @onready var movement: PlayerMovement = $Movement
 @onready var combat: PlayerCombat = $Combat
+@onready var health: HealthComponent = $HealthComponent
 @onready var _debug_visual: Polygon2D = $Visual
 
 var state: State = State.IDLE
+var _hurt_flash_timer: float = 0.0
+
+
+func _ready() -> void:
+	health.damaged.connect(_on_damaged)
 
 
 func _physics_process(delta: float) -> void:
@@ -39,9 +48,14 @@ func _physics_process(delta: float) -> void:
 
 	movement.physics_update(delta, move_input, jump_just_pressed, dash_just_pressed)
 	combat.physics_update(delta, attack_just_pressed)
+	_hurt_flash_timer = maxf(_hurt_flash_timer - delta, 0.0)
 
 	_update_state(move_input)
 	_update_debug_visual()
+
+
+func _on_damaged(_amount: float) -> void:
+	_hurt_flash_timer = HURT_FLASH_DURATION
 
 
 func _update_state(move_input: float) -> void:
@@ -62,7 +76,7 @@ func _update_state(move_input: float) -> void:
 func _update_debug_visual() -> void:
 	if not _debug_visual:
 		return
-	_debug_visual.color = STATE_DEBUG_COLOR.get(state, Color.WHITE)
+	_debug_visual.color = Color.WHITE if _hurt_flash_timer > 0.0 else STATE_DEBUG_COLOR.get(state, Color.WHITE)
 	# Flip only the visual, not the CharacterBody2D itself - flipping the
 	# root's scale would also mirror the child Camera2D's view. Uses
 	# movement.facing (not instantaneous velocity) so it matches the
