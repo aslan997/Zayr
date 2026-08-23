@@ -760,13 +760,60 @@ bug in the UI.
   on screen, whether it overlaps anything, color contrast) — that's
   inherently a manual-play concern, flagged rather than claimed covered.
 
+## Milestone: Combat Prototype — Step 12 (Veyr Step Particle Burst)
+
+**Status: implemented, headless-validated end-to-end through the real
+engine loop, needs manual play-test.**
+
+User said "continue" once more with no new selection. Unlike the last two
+times, picked this one myself rather than asking again: the particle
+burst was an already-specified requirement from the user's own Step 10
+brief ("dissolve into geometric Veyr particles... reform at the
+destination"), explicitly flagged as a known gap — completing it is
+finishing agreed design, not inventing new design, so it didn't need
+another round of confirmation. Skipped the other flagged options
+(Perfect Step, a new named ability) since those genuinely do need user
+design input, same as Veyr Step did before this session.
+
+### What changed
+
+- `scripts/player/PlayerVeyrStep.gd` — added `depart_burst`/
+  `arrive_burst` (`Polygon2D`, `top_level`): on activation, the departure
+  burst appears at the pre-step position at `burst_start_scale` and
+  shrinks to `burst_end_scale` (a "shatter"); the arrival burst appears
+  at the destination at `burst_end_scale` and grows to `burst_start_scale`
+  (a "reform") — both fading out over `step_duration` alongside the
+  existing trail, both hidden again once the step ends. Both `@export`
+  scales are tunable.
+- `scenes/player/Player.tscn` — added `DepartBurst`/`ArriveBurst`, each an
+  8-pointed star polygon (a small geometric "spark" shape, consistent
+  with the project's existing placeholder-VFX language — no textures or
+  a real particle system).
+
+### How to test
+
+Press K to Veyr Step and watch closely — you should see a small star
+shape shrink and fade where Zayr was standing, and a matching star grow
+and fade in at his new position, alongside the existing trail line.
+
+### Validation performed by the assistant
+
+- `godot --headless --path . --import` / `--quit-after 150` — both clean,
+  no errors.
+- Wrote a throwaway real-engine-loop test (not committed) that triggered
+  a step and confirmed: both bursts spawn at the exact expected world
+  positions (pre-step and post-step respectively) and become visible;
+  their starting scales match the configured `burst_start_scale`/
+  `burst_end_scale` exactly; sampled mid-step scale values confirmed the
+  departure burst shrinks toward `burst_end_scale` while the arrival
+  burst grows toward `burst_start_scale` (opposite directions, as
+  intended); both are hidden again once the step ends.
+
 ## Next Milestone (not started, awaiting direction)
 
-Every candidate raised across this session has now been built or
-explicitly deferred pending user design input. Do not start new work
-without explicit direction — possible directions include: the Veyr Step
-particle burst / Perfect Step follow-ups (Step 10), defining another
-named ability (Ember Form / Aether Flight / Veil — same situation Veyr
-Step was in before this session, needs a user design brief first),
-further enemy variety, or new world/story content per the GDD's broader
-scope.
+Remaining candidates all genuinely need user input: Perfect Step (a
+separate named ability, precision-timing reward — needs its own design,
+same situation Veyr Step was in before this session), a new named ability
+(Ember Form / Aether Flight / Veil), further enemy variety, or new world/
+story content per the GDD's broader scope. Do not start without explicit
+direction.

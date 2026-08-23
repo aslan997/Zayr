@@ -5,8 +5,9 @@ class_name PlayerVeyrStep
 ## with no traveled motion, in the direction held at the moment of
 ## activation (falls back to Movement.facing with no directional input
 ## held). Briefly makes Zayr invulnerable and hides his visual, and draws
-## a short fading trail between the old and new position. Works
-## identically on the ground or in the air.
+## a short fading trail between the old and new position plus a small
+## geometric "shatter" burst at the departure point and a "reform" burst
+## at the arrival point. Works identically on the ground or in the air.
 ##
 ## Can interrupt an in-progress dash or attack - that's the point
 ## ("emergency repositioning") - but only as a one-time reset via
@@ -23,19 +24,26 @@ class_name PlayerVeyrStep
 @onready var health: HealthComponent = get_parent().get_node("HealthComponent")
 @onready var visual: Polygon2D = get_parent().get_node("Visual")
 @onready var trail: Line2D = get_parent().get_node("TrailLine")
+@onready var depart_burst: Polygon2D = get_parent().get_node("DepartBurst")
+@onready var arrive_burst: Polygon2D = get_parent().get_node("ArriveBurst")
 
 @export_group("Veyr Step")
 ## Deliberately shorter than the normal dash's 130px - a repositioning
 ## tool, not extra mobility range.
 @export var step_distance: float = 90.0
 ## How long the transition lasts: Zayr is invulnerable, hidden, and the
-## trail is visible/fading for this whole window. Very short by design -
-## this is meant to read as instantaneous, not as travel.
+## trail/bursts are visible/fading for this whole window. Very short by
+## design - this is meant to read as instantaneous, not as travel.
 @export var step_duration: float = 0.1
 ## Recovery before Veyr Step can be used again.
 @export var step_cooldown: float = 0.55
 @export var trail_color: Color = Color(0.55, 0.4, 1.0)
 @export var trail_width: float = 4.0
+## The departure burst shrinks from this scale to burst_end_scale (a
+## "shatter"); the arrival burst grows from burst_end_scale to this scale
+## (a "reform"), both fading out over step_duration at the same time.
+@export var burst_start_scale: float = 1.3
+@export var burst_end_scale: float = 0.2
 
 var is_stepping: bool = false
 
@@ -49,6 +57,11 @@ func _ready() -> void:
 	trail.clear_points()
 	trail.modulate.a = 0.0
 
+	for burst in [depart_burst, arrive_burst]:
+		burst.color = trail_color
+		burst.visible = false
+		burst.modulate.a = 0.0
+
 
 func physics_update(delta: float, aim_x: float, aim_y: float, step_just_pressed: bool) -> void:
 	_cooldown_timer = maxf(_cooldown_timer - delta, 0.0)
@@ -59,7 +72,13 @@ func physics_update(delta: float, aim_x: float, aim_y: float, step_just_pressed:
 
 	if is_stepping:
 		_step_timer -= delta
-		trail.modulate.a = clampf(_step_timer / step_duration, 0.0, 1.0)
+		var progress: float = 1.0 - clampf(_step_timer / step_duration, 0.0, 1.0)
+		var fade: float = 1.0 - progress
+		trail.modulate.a = fade
+		depart_burst.modulate.a = fade
+		depart_burst.scale = Vector2.ONE * lerpf(burst_start_scale, burst_end_scale, progress)
+		arrive_burst.modulate.a = fade
+		arrive_burst.scale = Vector2.ONE * lerpf(burst_end_scale, burst_start_scale, progress)
 		if _step_timer <= 0.0:
 			_end_step()
 
@@ -91,9 +110,21 @@ func _do_step(aim_x: float, aim_y: float) -> void:
 	trail.add_point(body.global_position)
 	trail.modulate.a = 1.0
 
+	depart_burst.global_position = start_pos
+	depart_burst.scale = Vector2.ONE * burst_start_scale
+	depart_burst.modulate.a = 1.0
+	depart_burst.visible = true
+
+	arrive_burst.global_position = body.global_position
+	arrive_burst.scale = Vector2.ONE * burst_end_scale
+	arrive_burst.modulate.a = 1.0
+	arrive_burst.visible = true
+
 
 func _end_step() -> void:
 	is_stepping = false
 	health.is_invulnerable = false
 	visual.visible = true
 	trail.modulate.a = 0.0
+	depart_burst.visible = false
+	arrive_burst.visible = false

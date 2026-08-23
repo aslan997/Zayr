@@ -271,9 +271,9 @@ the 8-directional input Veyr Step reads.
 - Two enemy variants exist (melee, ranged) — no `BossController`. See §4
   for their specific known limitations (ledge detection, chase leash,
   projectile/world collision, ranged-enemy kiting).
-- Veyr Step (see [COMBAT.md](COMBAT.md) §7) has no particle burst yet
-  (trail line only), and no "Perfect Step" precision-timing reward. Its
-  diagonal-direction math and wall-clamp were headless-validated but hit
+- Veyr Step (see [COMBAT.md](COMBAT.md) §7) has no "Perfect Step"
+  precision-timing reward. Its diagonal-direction math and wall-clamp
+  were headless-validated but hit
   test-harness timing flakiness on the multi-key-combo cases specifically
   (not the core teleport/invulnerability/cooldown, which validated
   cleanly and consistently) — worth a deliberate manual check of a few

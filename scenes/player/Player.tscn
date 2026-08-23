@@ -76,3 +76,13 @@ script = ExtResource("9_veyr_step")
 
 [node name="TrailLine" type="Line2D" parent="."]
 top_level = true
+
+[node name="DepartBurst" type="Polygon2D" parent="."]
+top_level = true
+visible = false
+polygon = PackedVector2Array(12, 0, 3, 3, 0, 12, -3, 3, -12, 0, -3, -3, 0, -12, 3, -3)
+
+[node name="ArriveBurst" type="Polygon2D" parent="."]
+top_level = true
+visible = false
+polygon = PackedVector2Array(12, 0, 3, 3, 0, 12, -3, 3, -12, 0, -3, -3, 0, -12, 3, -3)

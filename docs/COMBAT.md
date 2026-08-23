@@ -197,14 +197,15 @@ see [PROGRESS.md](PROGRESS.md) for the full milestone entry):
 - Visual: a `Line2D` trail (a `top_level` node so its points stay in world
   space independent of Zayr's own transform) drawn between the pre- and
   post-step position, fading over `step_duration`; Zayr's own placeholder
-  visual is hidden for that same window and restored after. No particle
-  "shatter" burst — flagged as a placeholder simplification, see below.
+  visual is hidden for that same window and restored after. Plus two
+  small 8-pointed-star `Polygon2D` bursts (`DepartBurst`/`ArriveBurst`,
+  also `top_level`): the departure one shrinks from `burst_start_scale`
+  to `burst_end_scale` (a "shatter"), the arrival one grows the other way
+  (a "reform"), both fading out over `step_duration` alongside the trail —
+  not a real particle system, but delivers the brief's "dissolve into
+  geometric Veyr particles... reform at the destination" without one.
 
 **Known limitations, not fixed:**
-- The "dissolve into geometric Veyr particles" part of the brief is only
-  partially realized — there's a fading trail line, but no actual burst/
-  shard effect at the departure and arrival points. Deferred rather than
-  building a particle system for a prototype.
 - No distinct reward for *precise* invulnerability timing beyond the
   window existing at all — that's explicitly the not-yet-implemented
   "Perfect Step" from the brief (§3), a separate ability.
