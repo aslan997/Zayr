@@ -82,11 +82,11 @@ pattern as `PlayerMovement.gd` — see [COMBAT.md](COMBAT.md) §6.
 states needed so far are implemented:
 
 ```
-IDLE, RUN, JUMP, FALL, WALL_SLIDE, DASH, AIR_DASH, ATTACK_1
+IDLE, RUN, JUMP, FALL, WALL_SLIDE, DASH, AIR_DASH, ATTACK_1, ATTACK_2, ATTACK_3
 ```
 
-The remaining eventual states (`ATTACK_2/3, HEAVY_ATTACK, CHARGING, HURT,
-DEAD, EMBER, VEIL`) are **not** implemented yet. States are derived from
+The remaining eventual states (`HEAVY_ATTACK, CHARGING, HURT, DEAD, EMBER,
+VEIL`) are **not** implemented yet. States are derived from
 movement output each physics frame — the enum can be extended without
 restructuring the controller, since transitions are just a `match` on
 current velocity/contact/dash state.

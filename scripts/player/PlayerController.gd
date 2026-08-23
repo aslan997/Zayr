@@ -4,7 +4,7 @@ class_name PlayerController
 ## the Movement component. Combat/health/abilities will be added later as
 ## sibling components without this file absorbing their responsibilities.
 
-enum State { IDLE, RUN, JUMP, FALL, WALL_SLIDE, DASH, AIR_DASH, ATTACK_1 }
+enum State { IDLE, RUN, JUMP, FALL, WALL_SLIDE, DASH, AIR_DASH, ATTACK_1, ATTACK_2, ATTACK_3 }
 
 ## Temporary debug tint per state, so state transitions are visible before
 ## real animations exist. Safe to delete once an AnimationPlayer/AnimatedSprite
@@ -18,7 +18,11 @@ const STATE_DEBUG_COLOR: Dictionary = {
 	State.DASH: Color(1.0, 1.0, 1.0),
 	State.AIR_DASH: Color(1.0, 0.95, 0.2),
 	State.ATTACK_1: Color(0.3, 0.95, 0.85),
+	State.ATTACK_2: Color(0.3, 0.75, 0.95),
+	State.ATTACK_3: Color(0.85, 0.55, 0.95),
 }
+## Combo index (PlayerCombat.combo_index) -> the matching attack state.
+const COMBO_STATE: Array[State] = [State.ATTACK_1, State.ATTACK_2, State.ATTACK_3]
 
 @onready var movement: PlayerMovement = $Movement
 @onready var combat: PlayerCombat = $Combat
@@ -44,7 +48,7 @@ func _update_state(move_input: float) -> void:
 	if movement.is_dashing:
 		state = State.AIR_DASH if movement.dash_is_air else State.DASH
 	elif combat.is_attacking:
-		state = State.ATTACK_1
+		state = COMBO_STATE[combat.combo_index]
 	elif movement.is_wall_sliding:
 		state = State.WALL_SLIDE
 	elif not is_on_floor():

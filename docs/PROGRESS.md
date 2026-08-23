@@ -279,9 +279,67 @@ they are.
   hitstop strength/duration, whether independent dash/attack feels wrong
   in practice) — needs a manual play session.
 
+## Milestone: Combat Prototype — Step 5 (3-Hit Combo)
+
+**Status: implemented, headless-validated end-to-end (all 3 swings chained
+through the real engine loop with cumulative damage), needs manual
+play-test.**
+
+User said "continue" again without picking between the three offered
+options (3-hit combo, Veyr Step, or a first enemy). Picked the combo:
+it's explicitly named in the brief/COMBAT.md and extends the already-
+approved, already-validated attack system with no new architecture,
+unlike Veyr Step (mechanics still unspecified — same reason it was
+skipped last time) or a first enemy (would need a new EnemyController/
+EnemyAI subsystem, and enemies were explicitly out of scope in the
+original project brief until called for on their own).
+
+### What changed
+
+- `scripts/player/PlayerCombat.gd` — reworked from a single swing into a
+  3-swing combo. Per-swing timing/damage/color are now parallel
+  `@export` arrays (`swing_durations`, `hitbox_start_times`,
+  `hitbox_end_times`, `damages`, `swing_colors`) sized 3, keeping every
+  swing individually tunable in the Inspector rather than hand-editing
+  code. Pressing attack again during a swing queues the next one,
+  resolved with no gap the instant the current swing ends. Reaching the
+  end of the combo (or a stray press after it) resets to swing 1 and
+  requires the normal `attack_cooldown` — no instant self-loop.
+- `scripts/player/PlayerController.gd` — `ATTACK_1` state split into
+  `ATTACK_1`/`ATTACK_2`/`ATTACK_3`, mapped from `PlayerCombat.combo_index`.
+
+### How to test
+
+1. Run the project (F5), walk to the training dummy.
+2. Press J up to three times in a row (a little ahead of each swing
+   finishing, not simultaneously) to chain the full combo — the debug
+   rectangle should step through three different colors (teal → blue →
+   violet) and the dummy should flash on each of the three hits.
+3. Press J once and then wait — only swing 1 should play; the combo does
+   not auto-continue without input.
+4. Immediately after a full 3-hit combo, try pressing J again right away —
+   it should NOT restart instantly; there should be a brief, deliberate
+   pause (`attack_cooldown`) first.
+
+### Validation performed by the assistant
+
+- `godot --headless --path . --import` / `--quit-after 60` — both clean,
+  no errors.
+- Wrote a throwaway full-stack headless test (not committed) that walked
+  Zayr to the dummy and pressed attack mid-swing three times: dummy health
+  went 60 → 48 → 36 → 16, exactly matching the configured 12+12+20
+  damage. Confirmed `combo_index` reset to 0 and `is_attacking` was false
+  after the combo ended, and that pressing attack again on the very next
+  frame did **not** restart the attack (cooldown correctly gated it) —
+  specifically checking for the self-loop exploit this design intends to
+  avoid.
+- **Not yet verified:** combo "feel" (chain timing tightness, whether 3
+  swings in a row reads well with only color as feedback, hitstop
+  stacking across 3 hits) — needs a manual play session.
+
 ## Next Milestone (not started, awaiting direction)
 
-To be defined — likely candidates: the 3-hit combo (`ATTACK_2`/`ATTACK_3`),
-Veyr Step, or a first enemy (which would need at least a minimal
-EnemyController/EnemyAI, currently nonexistent). Do not start without
+To be defined — likely candidates: Veyr Step (would need its mechanics
+defined first — not just a name), or a first enemy (needs a new
+EnemyController/EnemyAI, which doesn't exist yet). Do not start without
 explicit approval.

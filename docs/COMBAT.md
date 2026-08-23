@@ -67,23 +67,30 @@ The items above beyond Hitbox/Hurtbox are not built yet.
 
 ## 6. Status
 
-**First Veyr Edge attack implemented (a single swing, not the 3-hit combo
-yet). No enemies exist — validated against a training-dummy test fixture,
-see [PROGRESS.md](PROGRESS.md).**
+**Veyr Edge 3-hit combo implemented. No enemies exist — validated against
+a training-dummy test fixture, see [PROGRESS.md](PROGRESS.md).**
 
 - `PlayerCombat` (`scripts/player/PlayerCombat.gd`) — reads the `attack`
-  input, drives a windup → active → recovery timeline (all `@export`
-  tunable), positions/activates a `Hitbox` in Zayr's facing direction, and
-  applies a brief hitstop (via `Engine.time_scale`, restored afterward) on
-  a landed hit.
+  input and plays 3 swings, each with its own `@export`-tunable
+  windup/active/duration/damage/color. Pressing attack again while a swing
+  is playing queues the next one, resolved (with no gap) the instant the
+  current swing ends. If nothing is queued by the end of the 3rd swing —
+  or a press comes in after it's already landed — the combo resets to
+  swing 1 and the usual `attack_cooldown` applies; it does **not**
+  instantly loop back into swing 1 (that would let holding the button down
+  bypass any recovery entirely).
+- Each swing positions/activates a `Hitbox` in Zayr's current facing
+  direction and applies a brief hitstop (via `Engine.time_scale`, restored
+  afterward) on a landed hit.
 - Placeholder Veyr Edge visual: a simple geometric polygon (the "Edge"
-  form only — Spear/Crescent/Lance are not implemented) that appears for
-  the swing and fades out. No shader/particles yet — flagged as
-  placeholder, not final VFX.
-- **Not implemented, deliberately out of scope for this pass:** combo
-  chaining (`ATTACK_2`/`ATTACK_3`), heavy/charged attacks, aerial attacks,
-  the ranged Veyr attack, Veyr Step, Perfect Step, stagger/stability,
-  screen shake, enemy telegraphs.
+  form only — Spear/Crescent/Lance are not implemented), tinted
+  differently per swing so combo progress is readable pre-animation. No
+  shader/particles yet — flagged as placeholder, not final VFX.
+- Per-swing damage (12/12/20) is a placeholder, not from the brief — exact
+  combat balance is still TBD.
+- **Not implemented, deliberately out of scope:** heavy/charged attacks,
+  aerial attacks, the ranged Veyr attack, Veyr Step, Perfect Step,
+  stagger/stability, screen shake, enemy telegraphs.
 - **Known simplification:** the attack does not lock or cancel movement/
   dash — they run independently. Revisit once combo/interrupt rules are
   actually designed; not invented here.
