@@ -17,15 +17,27 @@ class_name PlayerVeyrStep
 ## A straight-line safety check (CharacterBody2D.move_and_collide in
 ## test-only mode) clamps the teleport short of any wall it would
 ## otherwise land inside.
+##
+## Also owns Perfect Step (see docs/COMBAT.md): if an enemy Hitbox would
+## have hit Zayr's own Hurtbox during the invulnerability window (that's
+## what Hurtbox.hit_avoided means - detected via the existing Hitbox/
+## Hurtbox overlap system, not a separate check), reward the precisely-
+## timed evade with a stronger burst, a brief hitstop, a small Veyr
+## refund, and an optional audio cue. Does not teleport again, does not
+## attack, does not extend invulnerability, and needs no separate input -
+## it's purely a reactive bonus layered onto a normal step.
 
 @onready var body: CharacterBody2D = get_parent()
 @onready var movement: PlayerMovement = get_parent().get_node("Movement")
 @onready var combat: PlayerCombat = get_parent().get_node("Combat")
 @onready var health: HealthComponent = get_parent().get_node("HealthComponent")
+@onready var hurtbox: Hurtbox = get_parent().get_node("Hurtbox")
+@onready var veyr: VeyrComponent = get_parent().get_node("VeyrComponent")
 @onready var visual: Polygon2D = get_parent().get_node("Visual")
 @onready var trail: Line2D = get_parent().get_node("TrailLine")
 @onready var depart_burst: Polygon2D = get_parent().get_node("DepartBurst")
 @onready var arrive_burst: Polygon2D = get_parent().get_node("ArriveBurst")
+@onready var audio_player: AudioStreamPlayer = $AudioPlayer
 
 @export_group("Veyr Step")
 ## Deliberately shorter than the normal dash's 130px - a repositioning
@@ -45,10 +57,33 @@ class_name PlayerVeyrStep
 @export var burst_start_scale: float = 1.3
 @export var burst_end_scale: float = 0.2
 
+@export_group("Perfect Step")
+## How long after activation an avoided hit still counts as "perfect".
+## Independently tunable from step_duration (defaults to the same span)
+## so detection can later be narrowed to reward genuinely precise timing
+## without touching the invulnerability window itself.
+@export var perfect_detection_window: float = 0.1
+## Brief hitstop rewarding the evade - deliberately separate values from
+## PlayerCombat's own hitstop, and deliberately short (not an extended
+## slow-motion effect).
+@export var perfect_hitstop_duration: float = 0.05
+@export_range(0.0, 1.0) var perfect_hitstop_time_scale: float = 0.05
+## Multiplies the normal depart/arrive burst scale on a perfect step.
+@export var perfect_burst_scale_multiplier: float = 1.6
+## Not from the design brief - placeholder, tunable.
+@export var perfect_veyr_restore: float = 15.0
+## No audio system exists in this project yet (see docs/COMBAT.md) - this
+## is a ready hook, not a system: assign a stream to hear a cue, leave it
+## empty (default) and Perfect Step stays silent.
+@export var perfect_audio_cue: AudioStream = null
+
 var is_stepping: bool = false
 
 var _step_timer: float = 0.0
 var _cooldown_timer: float = 0.0
+var _perfect_detection_timer: float = 0.0
+var _perfect_triggered_this_step: bool = false
+var _perfect_burst_bonus: float = 1.0
 
 
 func _ready() -> void:
@@ -62,6 +97,8 @@ func _ready() -> void:
 		burst.visible = false
 		burst.modulate.a = 0.0
 
+	hurtbox.hit_avoided.connect(_on_hit_avoided)
+
 
 func physics_update(delta: float, aim_x: float, aim_y: float, step_just_pressed: bool) -> void:
 	_cooldown_timer = maxf(_cooldown_timer - delta, 0.0)
@@ -72,13 +109,14 @@ func physics_update(delta: float, aim_x: float, aim_y: float, step_just_pressed:
 
 	if is_stepping:
 		_step_timer -= delta
+		_perfect_detection_timer = maxf(_perfect_detection_timer - delta, 0.0)
 		var progress: float = 1.0 - clampf(_step_timer / step_duration, 0.0, 1.0)
 		var fade: float = 1.0 - progress
 		trail.modulate.a = fade
 		depart_burst.modulate.a = fade
-		depart_burst.scale = Vector2.ONE * lerpf(burst_start_scale, burst_end_scale, progress)
+		depart_burst.scale = Vector2.ONE * lerpf(burst_start_scale, burst_end_scale, progress) * _perfect_burst_bonus
 		arrive_burst.modulate.a = fade
-		arrive_burst.scale = Vector2.ONE * lerpf(burst_end_scale, burst_start_scale, progress)
+		arrive_burst.scale = Vector2.ONE * lerpf(burst_end_scale, burst_start_scale, progress) * _perfect_burst_bonus
 		if _step_timer <= 0.0:
 			_end_step()
 
@@ -102,6 +140,9 @@ func _do_step(aim_x: float, aim_y: float) -> void:
 	is_stepping = true
 	_step_timer = step_duration
 	_cooldown_timer = step_cooldown
+	_perfect_detection_timer = perfect_detection_window
+	_perfect_triggered_this_step = false
+	_perfect_burst_bonus = 1.0
 	health.is_invulnerable = true
 	visual.visible = false
 
@@ -128,3 +169,25 @@ func _end_step() -> void:
 	trail.modulate.a = 0.0
 	depart_burst.visible = false
 	arrive_burst.visible = false
+
+
+func _on_hit_avoided(_damage: float, _hitbox: Hitbox) -> void:
+	if not is_stepping or _perfect_triggered_this_step or _perfect_detection_timer <= 0.0:
+		return
+	_perfect_triggered_this_step = true
+	_trigger_perfect_step()
+
+
+func _trigger_perfect_step() -> void:
+	_perfect_burst_bonus = perfect_burst_scale_multiplier
+	veyr.add(perfect_veyr_restore)
+	if perfect_audio_cue:
+		audio_player.stream = perfect_audio_cue
+		audio_player.play()
+	_apply_perfect_hitstop()
+
+
+func _apply_perfect_hitstop() -> void:
+	Engine.time_scale = perfect_hitstop_time_scale
+	await body.get_tree().create_timer(perfect_hitstop_duration, true, false, true).timeout
+	Engine.time_scale = 1.0

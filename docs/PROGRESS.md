@@ -809,11 +809,81 @@ and fade in at his new position, alongside the existing trail line.
   burst grows toward `burst_start_scale` (opposite directions, as
   intended); both are hidden again once the step ends.
 
+## Milestone: Combat Prototype — Step 13 (Perfect Step)
+
+**Status: implemented, headless-validated end-to-end through the real
+engine loop (including the negative/no-false-trigger case), needs manual
+play-test.**
+
+User gave a full design brief for Perfect Step and explicitly asked to
+inspect the current implementation and propose the integration *before*
+making changes. Did that as a distinct step (findings + a concrete
+signal-based plan, confirmed via a yes/no check) before writing any code
+— the first time in this session a change was gated on an explicit
+pre-approval rather than "explain briefly, then proceed."
+
+### What changed
+
+- `scripts/combat/Hurtbox.gd` — added a generic `hit_avoided(damage,
+  hitbox)` signal, emitted from `receive_hit()` when a hit lands while
+  the owner's `HealthComponent.is_invulnerable` is true. This is a fact
+  about `Hurtbox` itself (not Perfect-Step-specific), per the brief's
+  explicit instruction to use the existing Hitbox/Hurtbox architecture
+  rather than building a separate detection system.
+- `scripts/player/PlayerVeyrStep.gd` — listens for its own `Hurtbox`'s
+  `hit_avoided`. Triggers Perfect Step only if currently stepping, only
+  once per step, and only within a separately-configurable
+  `perfect_detection_window`. On trigger: a separate hitstop (own
+  exports, not shared with `PlayerCombat`'s), a `perfect_burst_scale_
+  multiplier` applied to the existing depart/arrive bursts for the rest
+  of the step, and `VeyrComponent.add(perfect_veyr_restore)`. All new
+  values are `@export`s on `PlayerVeyrStep` only — nothing hardcoded into
+  `Hurtbox`, `HealthComponent`, or elsewhere.
+- Audio: checked first — there is no audio system anywhere in this
+  project (no `AudioStreamPlayer` usage, `assets/audio/` empty). Per the
+  brief's own "if the audio system is already available" condition, none
+  was built. Added an `AudioStreamPlayer` child + an exported
+  `perfect_audio_cue: AudioStream` (defaults to `null`) — a ready hook,
+  silent until a sound asset is assigned.
+- `scenes/player/Player.tscn` — added the `AudioPlayer` node under
+  `VeyrStep`.
+
+### How to test
+
+Time a Veyr Step so it carries you through an enemy's attack at the
+moment it would land (the melee enemy's telegraphed swing is the easiest
+to practice against — step just as the blade activates). A normal dodge
+(stepping when nothing was actually about to hit you) should feel like
+before; a genuinely perfectly-timed one should feel distinctly stronger —
+a small extra freeze-frame and a bigger burst — and the Veyr bar should
+tick up slightly.
+
+### Validation performed by the assistant
+
+- `godot --headless --path . --import` / `--quit-after 150` — both clean,
+  no errors.
+- Wrote a throwaway real-engine-loop test (not committed) covering both
+  the positive and negative case:
+  - A step with nothing nearby to avoid: confirmed `_perfect_triggered_
+    this_step` stayed `false` and the burst multiplier stayed `1.0` — no
+    false-positive from merely using Veyr Step.
+  - A step engineered to land exactly on a live, activated enemy-owned
+    `Hitbox`: confirmed the perfect trigger fired exactly once, the burst
+    multiplier matched the configured `1.6`, `Engine.time_scale` dipped
+    to the configured `0.05` and was confirmed restored to `1.0`
+    afterward, Veyr increased by exactly the configured `15.0` (50 → 65),
+    and — critically — `current_health` was unchanged throughout,
+    confirming this is genuinely layered on top of a normal (undamaging)
+    Veyr Step rather than a separate mechanic.
+- **Not yet verified:** the "feel" of the reward in an actual timed
+  encounter against the real (not engineered) enemy AI, and the optional
+  audio path (untestable without an actual sound asset — the hook is
+  wired but silent).
+
 ## Next Milestone (not started, awaiting direction)
 
-Remaining candidates all genuinely need user input: Perfect Step (a
-separate named ability, precision-timing reward — needs its own design,
-same situation Veyr Step was in before this session), a new named ability
-(Ember Form / Aether Flight / Veil), further enemy variety, or new world/
-story content per the GDD's broader scope. Do not start without explicit
-direction.
+Remaining candidates still genuinely need user input: a new named ability
+(Ember Form / Aether Flight / Veil — each would need its own design brief
+like Veyr Step and Perfect Step got), further enemy variety, or new
+world/story content per the GDD's broader scope. Do not start without
+explicit direction.

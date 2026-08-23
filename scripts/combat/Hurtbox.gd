@@ -5,6 +5,13 @@ class_name Hurtbox
 ## to know about HealthComponent directly.
 
 signal hit_received(damage: float, hitbox: Hitbox)
+## Emitted instead of (well, alongside - take_damage() still runs and
+## still no-ops) applying damage when a hit lands while the owner's
+## HealthComponent is invulnerable (e.g. mid Veyr Step). Generic - lets
+## systems like Perfect Step detect "an attack would have hit" using the
+## existing Hitbox/Hurtbox overlap detection, without a separate combat
+## detection system.
+signal hit_avoided(damage: float, hitbox: Hitbox)
 
 @export var health_component_path: NodePath
 
@@ -26,5 +33,7 @@ func _ready() -> void:
 
 func receive_hit(damage: float, hitbox: Hitbox) -> void:
 	hit_received.emit(damage, hitbox)
+	if _health and _health.is_invulnerable:
+		hit_avoided.emit(damage, hitbox)
 	if _health:
 		_health.take_damage(damage)

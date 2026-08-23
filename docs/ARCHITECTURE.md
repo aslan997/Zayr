@@ -124,6 +124,11 @@ itself now that more than one entity (player + enemy) has both a `Hitbox`
 and a `Hurtbox`; it isn't enforced by collision layers, since every
 entity's Hitbox/Hurtbox share the same layers (see §6).
 
+`Hurtbox` also emits `hit_avoided(damage, hitbox)` when a hit lands while
+its owner's `HealthComponent.is_invulnerable` is true — a generic fact
+about the Hurtbox, not tied to any one invulnerability source. Perfect
+Step ([COMBAT.md](COMBAT.md) §7.1) is what currently listens for it.
+
 ### 3.2 Death / Respawn
 
 No save system or game-over flow exists (out of scope — see §9), so
@@ -271,10 +276,11 @@ the 8-directional input Veyr Step reads.
 - Two enemy variants exist (melee, ranged) — no `BossController`. See §4
   for their specific known limitations (ledge detection, chase leash,
   projectile/world collision, ranged-enemy kiting).
-- Veyr Step (see [COMBAT.md](COMBAT.md) §7) has no "Perfect Step"
-  precision-timing reward. Its diagonal-direction math and wall-clamp
-  were headless-validated but hit
-  test-harness timing flakiness on the multi-key-combo cases specifically
-  (not the core teleport/invulnerability/cooldown, which validated
-  cleanly and consistently) — worth a deliberate manual check of a few
-  diagonal directions and stepping straight at a wall.
+- Veyr Step's diagonal-direction math and wall-clamp were
+  headless-validated but hit test-harness timing flakiness on the
+  multi-key-combo cases specifically (not the core teleport/
+  invulnerability/cooldown, which validated cleanly and consistently) —
+  worth a deliberate manual check of a few diagonal directions and
+  stepping straight at a wall. Perfect Step ([COMBAT.md](COMBAT.md) §7.1)
+  is implemented and headless-validated cleanly, including the negative
+  case (no false trigger with nothing to avoid).

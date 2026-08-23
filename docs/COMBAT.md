@@ -43,10 +43,8 @@ manifested around his body, not technically a sword.
 - Veyr ranged attack — not yet implemented for the player (the enemy has
   one via the reusable `Projectile` primitive it was built to eventually
   serve — see [ARCHITECTURE.md](ARCHITECTURE.md) §4)
-- Perfect Step — not yet implemented (a precision-timing variant of Veyr
-  Step, per the original brief; Veyr Step itself doesn't yet reward
-  "precise timing" beyond its invulnerability window existing at all —
-  see §7's known limitations)
+- Perfect Step — **implemented** (§7.1): rewards precisely timing a Veyr
+  Step through an actual incoming enemy attack.
 
 ## 4. Resource: Veyr
 
@@ -206,10 +204,56 @@ see [PROGRESS.md](PROGRESS.md) for the full milestone entry):
   geometric Veyr particles... reform at the destination" without one.
 
 **Known limitations, not fixed:**
-- No distinct reward for *precise* invulnerability timing beyond the
-  window existing at all — that's explicitly the not-yet-implemented
-  "Perfect Step" from the brief (§3), a separate ability.
 - Projectile.tscn's world-collision limitation ([ARCHITECTURE.md](ARCHITECTURE.md)
   §4) doesn't apply here, but the wall-clamp above hasn't been exercised
   against every wall shape in the arena — flagging for manual play-test
   rather than assuming it's airtight everywhere.
+
+### 7.1 Perfect Step
+
+User-specified design (paraphrased — see [PROGRESS.md](PROGRESS.md) for
+the milestone entry): when a Veyr Step's invulnerability window is what
+stops an actual incoming enemy attack from landing — not merely "used
+Veyr Step near an enemy" — reward the precisely-timed evade: a brief
+extra hitstop, a stronger version of the normal burst, a small Veyr
+refund, and an optional audio cue. Explicitly **not**: a second teleport,
+an automatic attack, extended slow-motion, permanent invulnerability, or
+a separate input — it's a reactive bonus layered onto a normal step, not
+a new ability with its own trigger.
+
+**Implemented in `scripts/player/PlayerVeyrStep.gd`, detected via the
+existing Hitbox/Hurtbox system per the brief's explicit instruction (no
+separate combat-detection system):**
+
+- `Hurtbox.gd` gained one generic addition: `receive_hit()` now emits a
+  new `hit_avoided(damage, hitbox)` signal when the hit lands while the
+  owner's `HealthComponent.is_invulnerable` is true (in addition to still
+  calling the already-existing no-op `take_damage()`). This is a fact
+  about the *Hurtbox*, not about Veyr Step or the player specifically —
+  keeps the primitive reusable — so all Perfect-Step-specific behavior
+  and tuning lives in `PlayerVeyrStep.gd`, which just listens for it.
+- Because an enemy's `Hitbox` only ever overlaps the player's `Hurtbox`
+  when it's a genuine attack (the owner-exclusion from §6/Step 6 already
+  rules out anything else touching it), `hit_avoided` firing on the
+  player's own `Hurtbox` **is** "an actual enemy attack that would have
+  hit Zayr" — no additional detection logic was needed.
+- Guarded to fire at most once per step (`_perfect_triggered_this_step`)
+  and only within a separately-configurable `perfect_detection_window`
+  (defaults to the same span as `step_duration`, but independently
+  tunable later without touching the invulnerability window itself — the
+  brief's "perfect detection window" value).
+- On trigger: a separate hitstop (own `perfect_hitstop_duration`/
+  `perfect_hitstop_time_scale` exports — not shared with `PlayerCombat`'s
+  hitstop), a `perfect_burst_scale_multiplier` applied on top of the
+  normal depart/arrive burst scale for the rest of that step, and
+  `VeyrComponent.add(perfect_veyr_restore)`.
+- Audio: **there is no audio system anywhere in this project** (checked
+  before implementing — no `AudioStreamPlayer` usage, `assets/audio/` is
+  empty). Per the brief's own "if the audio system is already available"
+  condition, one wasn't built. Added a ready-to-use hook instead: an
+  `AudioStreamPlayer` child + an exported `perfect_audio_cue: AudioStream`
+  defaulting to `null` — silent until a sound asset is assigned, no
+  audio-manager infrastructure invented.
+- All new tunables live only in `PlayerVeyrStep.gd`'s exports — `Hurtbox`
+  only gained the one generic signal, nothing Perfect-Step-specific was
+  hardcoded into it, `HealthComponent`, or anywhere else.
