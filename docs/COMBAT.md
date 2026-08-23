@@ -89,8 +89,13 @@ both hit and be hit by the player. See [PROGRESS.md](PROGRESS.md).**
     `EnemyController` shows a shared attacking-tint telegraph (on top of
     whichever attack-specific visual the AI drives) whenever
     `ai.is_attacking` is true.
-  - No `BossController`; each variant's specific known limitations are in
-    [ARCHITECTURE.md](ARCHITECTURE.md) §4.
+  - **Mini-boss** (`MiniBoss.tscn`) — extends `EnemyController`/uses the
+    same `EnemyAIBase` interface; combines the melee and ranged patterns
+    above in one entity (melee within `melee_range`, ranged beyond it up
+    to `detection_range`), plus a one-time "phase 2" (shortened cooldowns
+    + a base-color shift) below a configurable health ratio. See
+    [ARCHITECTURE.md](ARCHITECTURE.md) §4.1 for what it deliberately
+    doesn't do (no phase 3, no enrage timer, no boss-unique attack).
 - Fixed a latent `Hitbox`/`Hurtbox` gap while adding the enemy: neither
   had any owner-exclusion check, so an entity with both a `Hitbox` and a
   `Hurtbox` (which the player already had, and the enemy now also has)

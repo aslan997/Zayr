@@ -880,10 +880,90 @@ tick up slightly.
   audio path (untestable without an actual sound asset — the hook is
   wired but silent).
 
+## Milestone: Combat Prototype — Step 14 (Mini-Boss)
+
+**Status: implemented, headless-validated end-to-end through the real
+engine loop, needs manual play-test.**
+
+User gave a high-level roadmap for the project rather than picking from
+the offered options: "Movement → Veyr Step → Perfect Step → Enemy →
+Combat → Mini-boss → Vertical slice → Art." Everything before "Mini-boss"
+was already built, so that's the next step in their own stated sequence —
+proceeded directly (stating scope first) rather than opening another
+options round, since the direction itself was no longer ambiguous.
+
+The boss is deliberately **generic/unnamed** — none of the five reserved
+canon characters ([LORE.md](LORE.md) §5: Rhaek, Seyra, Vael, Nayra,
+Auren) were used or characterized; their "characterization and boss
+mechanics" stay explicitly deferred per the original brief. This is
+combat-prototype content, not story content.
+
+### What changed
+
+- `scripts/bosses/BossAI.gd` (new, `extends EnemyAIBase`) — combines the
+  two existing enemy attack patterns instead of inventing a new one:
+  melees (own `Hitbox`, like `EnemyAI`) within `melee_range`, or fires a
+  `Projectile` (like `RangedEnemyAI`) beyond it, up to `detection_range`.
+  Below a configurable health ratio (default 50%), permanently shortens
+  both attack cooldowns and emits `phase2_started` once — a numeric
+  escalation, not a new mechanic.
+- `scripts/bosses/BossController.gd` (new, **`extends EnemyController`**)
+  — deliberately does *not* duplicate `EnemyController`; the boss is
+  still just a body with gravity/velocity from its AI and the same
+  generic hit-flash/attacking-tint/death-fade feedback. The only addition
+  is a base-color shift on `phase2_started`.
+- `scenes/bosses/MiniBoss.tscn` (new) — bigger body/collision (1.5x a
+  regular enemy), 150 HP, crimson placeholder color, both a `Hitbox` (for
+  melee) and a `projectile_scene` reference (for ranged) on its `AI`.
+- `scripts/ui/HUD.gd` / `scenes/ui/HUD.tscn` — added a third, wider
+  `ResourceBar` for whatever's in a new `"boss"` group, hidden unless one
+  exists, shown once connected, hidden again ~1s after the boss dies (so
+  the bar is seen hitting zero, not just vanishing).
+- `scripts/ui/ResourceBar.gd` — **bug fix, caught before it shipped**:
+  the bar's `Background`/`Fill` children had hardcoded sizes independent
+  of the root `Control`'s `size`, so the wider boss-bar override
+  wouldn't have actually rendered wider. `_ready()` now propagates `size`
+  to both children.
+- `scenes/regions/TestArena.tscn` — placed the boss on the platform past
+  the dash-practice zone, as a natural "final challenge" after the
+  arena's existing gauntlet.
+
+### How to test
+
+Work through the arena to the far platform past the dash-practice
+zone — a larger crimson enemy. Approach and it should melee up close or
+fire projectiles from range depending on distance. Below ~50% of its
+health it should visibly darken/shift color and attack noticeably faster.
+A red bar should appear top-center of the screen tracking its health, and
+disappear a moment after it's defeated.
+
+### Validation performed by the assistant
+
+- `godot --headless --path . --import` — clean; `BossAI`, `BossController`
+  register as global classes.
+- `godot --headless --path . --quit-after 150` — clean, no runtime errors
+  with the boss present and idling.
+- Wrote a throwaway real-engine-loop test (not committed) that: confirmed
+  the boss bar becomes visible with the correct starting value once the
+  HUD connects; positioned the player within `melee_range` and confirmed
+  the boss's `Hitbox` activated (melee chosen); repositioned beyond
+  `melee_range` but within `detection_range` and confirmed a `Projectile`
+  appeared (ranged chosen); dealt damage to cross the 50% threshold and
+  confirmed `phase2_started` fired and the controller's color updated to
+  the configured `phase2_color`; killed the boss and confirmed it was
+  actually removed from the tree (not just hidden) and that the HUD boss
+  bar hid itself afterward.
+- **Not yet verified:** encounter "feel" (attack pacing, whether melee/
+  ranged switching reads clearly, phase 2 difficulty spike, whether the
+  boss bar's top-center position actually looks right at the project's
+  runtime resolution — computed against the default 1152×648 viewport
+  but not visually confirmed in-editor).
+
 ## Next Milestone (not started, awaiting direction)
 
-Remaining candidates still genuinely need user input: a new named ability
-(Ember Form / Aether Flight / Veil — each would need its own design brief
-like Veyr Step and Perfect Step got), further enemy variety, or new
-world/story content per the GDD's broader scope. Do not start without
-explicit direction.
+Per the user's stated roadmap, the next step after Mini-boss is
+**Vertical slice**, then **Art** — both are larger, more open-ended scope
+than anything built so far and will need direction on what a vertical
+slice concretely means here (which region(s), how much content, what
+"done" looks like) before starting. Do not start without explicit
+direction.

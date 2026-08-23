@@ -17,7 +17,13 @@ var _full_width: float = 0.0
 func _ready() -> void:
 	fill.color = fill_color
 	background.color = background_color
+	# Background/Fill are plain ColorRects with no anchors, so they don't
+	# auto-follow the root Control's size - resize them explicitly here.
+	# This is what makes overriding `size` per-instance (e.g. a wider
+	# boss bar) actually work, not just report a different root size.
 	_full_width = size.x
+	background.size = size
+	fill.size = size
 
 
 func set_value(current: float, max_value: float) -> void:

@@ -1,0 +1,61 @@
+[gd_scene load_steps=8 format=3]
+
+[ext_resource type="Script" path="res://scripts/bosses/BossController.gd" id="1_ctrl"]
+[ext_resource type="Script" path="res://scripts/bosses/BossAI.gd" id="2_ai"]
+[ext_resource type="Script" path="res://scripts/combat/HealthComponent.gd" id="3_health"]
+[ext_resource type="Script" path="res://scripts/combat/Hurtbox.gd" id="4_hurtbox"]
+[ext_resource type="Script" path="res://scripts/combat/Hitbox.gd" id="5_hitbox"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/Projectile.tscn" id="6_projectile"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_body"]
+size = Vector2(42, 69)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_hitbox"]
+size = Vector2(58, 40)
+
+[node name="MiniBoss" type="CharacterBody2D" groups=["boss"]]
+collision_layer = 16
+collision_mask = 1
+script = ExtResource("1_ctrl")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+position = Vector2(0, -34.5)
+shape = SubResource("RectangleShape2D_body")
+
+[node name="Visual" type="Polygon2D" parent="."]
+color = Color(0.7, 0.15, 0.15, 1)
+polygon = PackedVector2Array(-21, -69, 21, -69, 21, 0, -21, 0)
+
+[node name="AI" type="Node" parent="."]
+script = ExtResource("2_ai")
+projectile_scene = ExtResource("6_projectile")
+
+[node name="HealthComponent" type="Node" parent="."]
+script = ExtResource("3_health")
+max_health = 150.0
+
+[node name="Hurtbox" type="Area2D" parent="."]
+collision_layer = 8
+collision_mask = 0
+script = ExtResource("4_hurtbox")
+health_component_path = NodePath("../HealthComponent")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Hurtbox"]
+position = Vector2(0, -34.5)
+shape = SubResource("RectangleShape2D_body")
+
+[node name="Hitbox" type="Area2D" parent="."]
+position = Vector2(30, -34.5)
+collision_layer = 4
+collision_mask = 8
+script = ExtResource("5_hitbox")
+damage = 14.0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Hitbox"]
+position = Vector2(16, 0)
+shape = SubResource("RectangleShape2D_hitbox")
+
+[node name="SwingVisual" type="Polygon2D" parent="Hitbox"]
+visible = false
+color = Color(1, 0.4, 0.15, 1)
+polygon = PackedVector2Array(-14, 0, 11, -17, 42, 0, 11, 17)

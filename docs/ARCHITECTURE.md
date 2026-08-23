@@ -23,7 +23,7 @@ is organized. Update this when structural decisions are made.
 ├── scenes/
 │   ├── player/          Player scene(s)
 │   ├── enemies/         Enemy scenes (Enemy.tscn, RangedEnemy.tscn, Projectile.tscn)
-│   ├── bosses/          Boss scenes (not yet populated)
+│   ├── bosses/          MiniBoss.tscn
 │   ├── regions/         Level/region scenes (test arena lives here for now)
 │   ├── ui/               HUD.tscn, ResourceBar.tscn
 │   └── interactables/   Interactable object scenes (not yet populated)
@@ -32,7 +32,7 @@ is organized. Update this when structural decisions are made.
 │   ├── player/          PlayerController, PlayerMovement, ...
 │   ├── combat/          HealthComponent, VeyrComponent, Hitbox, Hurtbox, Projectile
 │   ├── enemies/         EnemyController, EnemyAIBase, EnemyAI, RangedEnemyAI
-│   ├── bosses/          Boss controller scripts (not yet populated)
+│   ├── bosses/          BossController, BossAI
 │   ├── systems/         Cross-cutting systems (camera, save, dialogue, memory, ...)
 │   └── ui/              HUD, ResourceBar
 │
@@ -192,7 +192,33 @@ every enemy variant via a common AI interface:
 - The ranged enemy is stationary — no kiting/repositioning to keep its
   distance if the player closes in.
 
-`BossController` doesn't exist yet.
+### 4.1 Mini-Boss
+
+**`scenes/bosses/MiniBoss.tscn`**, **`scripts/bosses/BossController.gd`**,
+and **`BossAI.gd`** — a generic (unnamed) mini-boss, not one of the reserved
+canon characters ([LORE.md](LORE.md) §5 — their characterization and boss
+mechanics are still explicitly deferred). Combines the two existing enemy
+attack patterns in one entity rather than inventing a new one:
+
+- `BossController` **extends `EnemyController`** (not a from-scratch
+  controller) — the boss is still just a body with gravity/velocity from
+  its `EnemyAIBase`-conforming AI and the same generic hit-flash/
+  attacking-tint/death-fade feedback. It only adds one thing: a base-color
+  shift when `BossAI.phase2_started` fires.
+- `BossAI` (`extends EnemyAIBase`, same interface as `EnemyAI`/
+  `RangedEnemyAI`) — stationary until `detection_range`, then melees
+  (own `Hitbox`, like `EnemyAI`) within `melee_range` or fires a
+  `Projectile` (like `RangedEnemyAI`) beyond it. Below
+  `phase2_health_ratio` (default 50%) it permanently shortens both attack
+  cooldowns by `phase2_cooldown_multiplier` and emits `phase2_started`
+  once — numeric escalation, not a new mechanic.
+- The HUD (§8) gained a third bar specifically for whatever's in the
+  `"boss"` group, hidden unless one exists in the scene.
+
+**Known limitations:** single phase-2 threshold only (no phase 3), no
+enrage/timer mechanic, no unique "boss-only" attack beyond combining the
+two existing patterns — deliberately proportionate to the "mini" in
+mini-boss rather than a full spectacle encounter.
 
 ## 5. Camera
 
@@ -254,13 +280,18 @@ the 8-directional input Veyr Step reads.
   project's placeholder-geometric visual language rather than a themed
   `ProgressBar`). `set_value(current, max)` resizes the fill; knows
   nothing about health or Veyr specifically, so it's reusable for either
-  (or any future resource).
+  (or any future resource). Its root `Control`'s `size` is the actual
+  source of truth for width — `_ready()` propagates it to the child
+  `Background`/`Fill` rects, so a per-instance override (e.g. the wider
+  boss bar below) genuinely resizes, not just reports a different value.
 - **`scripts/ui/HUD.gd`** + **`scenes/ui/HUD.tscn`** — a `CanvasLayer`
-  with a `ResourceBar` for health and one for Veyr. Finds the player via
-  the `"player"` group (the same lookup `EnemyAI` already uses) in a
-  `call_deferred()`'d connection, so it doesn't need manual per-region
-  wiring — instancing `HUD.tscn` in a region is enough. `TestArena.tscn`
-  does this.
+  with a `ResourceBar` each for the player's health and Veyr, plus a
+  third, wider one for whatever's in the `"boss"` group (hidden if none
+  exists; shown at connection time, hidden again ~1s after the boss's
+  `HealthComponent.died`). Finds player/boss via those groups (the same
+  lookup `EnemyAI`/`BossAI` use to find the player) in `call_deferred()`'d
+  connections, so it doesn't need manual per-region wiring — instancing
+  `HUD.tscn` in a region is enough. `TestArena.tscn` does this.
 - No numeric text (just bars), no low-health warning state, no damage-
   number popups. Deliberately minimal per what was asked for.
 
@@ -273,9 +304,10 @@ the 8-directional input Veyr Step reads.
 - Falling off the test arena still isn't handled — no bottomless-pit
   detection, so falling off an edge just falls forever rather than
   triggering the death/respawn flow above.
-- Two enemy variants exist (melee, ranged) — no `BossController`. See §4
-  for their specific known limitations (ledge detection, chase leash,
-  projectile/world collision, ranged-enemy kiting).
+- Two enemy variants exist (melee, ranged) plus one mini-boss. See §4/
+  §4.1 for their specific known limitations (ledge detection, chase
+  leash, projectile/world collision, ranged-enemy kiting, boss
+  single-phase-2-only).
 - Veyr Step's diagonal-direction math and wall-clamp were
   headless-validated but hit test-harness timing flakiness on the
   multi-key-combo cases specifically (not the core teleport/
