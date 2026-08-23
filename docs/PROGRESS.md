@@ -485,9 +485,64 @@ always, Veyr Step still has no defined mechanics beyond its name.
   the training dummy or standing near the gap edge causes any issue) —
   needs a manual play session.
 
+## Milestone: Combat Prototype — Step 8 (Player Death / Respawn)
+
+**Status: implemented, headless-validated end-to-end through the real
+engine loop, needs manual play-test.**
+
+User said "continue" a fifth time without picking between the three
+remaining options (Veyr Step, a second enemy variant, or player death
+handling). Went with death handling: it was an explicit flagged gap
+(`HealthComponent.died` already worked, just wasn't wired up on the
+player) rather than new invention, and it matters now that the enemy from
+Step 6/7 can actually put the player at risk during play-testing — dying
+mid-session with zero feedback or recovery would make further testing
+confusing.
+
+### What changed
+
+- `scripts/combat/HealthComponent.gd` — added `revive(to_amount := -1.0)`,
+  which resets health (full by default) and deliberately bypasses the
+  `is_dead()` guard `take_damage()`/`heal()` use. Generic, not
+  player-specific.
+- `scripts/player/PlayerController.gd` — added a `DEAD` state. On
+  `HealthComponent.died`: freeze (zero velocity, ignore all input,
+  clear any in-progress dash/attack flags) for `RESPAWN_DELAY` (1.2s),
+  then reset to the position Zayr started this scene at (captured once in
+  `_ready()`) and call `health.revive()`. No animation, no game-over UI,
+  no persistence — see [ARCHITECTURE.md](ARCHITECTURE.md) §3.2 for why
+  this is deliberately minimal (no save system exists to build a real
+  game-over flow on top of).
+
+### How to test
+
+1. Run the project (F5) and let the enemy hit you a few times (or just
+   stand in its attack range) until Zayr's debug rectangle goes dark
+   gray — that's death.
+2. Confirm input does nothing for about a second — you can't move, dash,
+   or attack.
+3. Confirm Zayr then reappears at the arena's start position, rectangle
+   back to normal color, fully controllable again.
+
+### Validation performed by the assistant
+
+- `godot --headless --path . --import` / `--quit-after 90` — both clean,
+  no errors.
+- Wrote a throwaway real-engine-loop test (not committed) that killed the
+  player directly (`health.take_damage(9999)`), then: confirmed `state`
+  became `DEAD` immediately; held `move_right` for 30 frames and confirmed
+  position never changed by even one pixel (input is fully inert while
+  dead, not just slowed); then waited and confirmed Zayr respawned at
+  exactly the original spawn x-position with `current_health` back to 100
+  and `state` back to `IDLE` — a complete, working death → freeze →
+  respawn cycle, not just "it doesn't crash."
+- **Not yet verified:** respawn "feel" (whether 1.2s freeze is too
+  long/short, whether respawning at the arena start — rather than a
+  closer checkpoint — is annoying given the walk back to the enemy) —
+  needs a manual play session.
+
 ## Next Milestone (not started, awaiting direction)
 
 To be defined — likely candidates: Veyr Step (still needs its mechanics
-defined, not just implemented), a second enemy variant, or wiring player
-death/game-over handling (flagged as a gap since Step 6). Do not start
+defined, not just implemented), or a second enemy variant. Do not start
 without explicit approval.

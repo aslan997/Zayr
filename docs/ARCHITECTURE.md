@@ -82,11 +82,13 @@ pattern as `PlayerMovement.gd` — see [COMBAT.md](COMBAT.md) §6.
 states needed so far are implemented:
 
 ```
-IDLE, RUN, JUMP, FALL, WALL_SLIDE, DASH, AIR_DASH, ATTACK_1, ATTACK_2, ATTACK_3
+IDLE, RUN, JUMP, FALL, WALL_SLIDE, DASH, AIR_DASH, ATTACK_1, ATTACK_2, ATTACK_3, DEAD
 ```
 
-The remaining eventual states (`HEAVY_ATTACK, CHARGING, HURT, DEAD, EMBER,
-VEIL`) are **not** implemented yet. States are derived from
+The remaining eventual states (`HEAVY_ATTACK, CHARGING, HURT, EMBER, VEIL`)
+are **not** implemented yet. `DEAD` exists but is prototype-minimal: no
+animation, just a freeze + timed respawn (see §3.2) — there's no `HURT`
+state (no knockback/i-frames/stagger design exists to build one from yet). States are derived from
 movement output each physics frame — the enum can be extended without
 restructuring the controller, since transitions are just a `match` on
 current velocity/contact/dash state.
@@ -116,6 +118,18 @@ the entity that owns them (Zayr, an enemy). Both expose an `owner_body`
 itself now that more than one entity (player + enemy) has both a `Hitbox`
 and a `Hurtbox`; it isn't enforced by collision layers, since every
 entity's Hitbox/Hurtbox share the same layers (see §6).
+
+### 3.2 Death / Respawn
+
+No save system or game-over flow exists (out of scope — see §8), so
+`PlayerController` handles `HealthComponent.died` with the minimal thing
+that keeps a combat prototype testable: freeze input for
+`RESPAWN_DELAY`, then reset position to wherever Zayr started this scene
+(`global_position` captured once in `_ready()`) and call the new
+`HealthComponent.revive()`. `revive()` deliberately bypasses the
+`is_dead()` guard `take_damage()`/`heal()` use, since undoing that guard
+is the entire point of reviving. No animation, no game-over screen, no
+persistence across scene reloads.
 
 ## 4. Enemy Architecture
 
@@ -195,12 +209,11 @@ concern):
 
 - No save system yet.
 - No animation system yet (placeholder geometry only).
-- No player death/game-over handling — `HealthComponent.died` exists and
-  works (the enemy uses it), but nothing is wired to it on the player.
-  Health is generous by default so this hasn't mattered in testing yet;
-  flagging so it isn't forgotten once enemies deal real pressure.
-- Falling off the test arena has no death/respawn handling — out of scope
-  until health/save systems exist.
+- Player death respawns in place (see §3.2) — no game-over screen, no
+  persistence, no death animation.
+- Falling off the test arena still isn't handled — no bottomless-pit
+  detection, so falling off an edge just falls forever rather than
+  triggering the death/respawn flow above.
 - Only one enemy type exists — no ranged/varied attacks, no
   `BossController`. It patrols/chases (see §4) but has no ledge detection
   or chase leash.

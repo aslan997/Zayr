@@ -35,3 +35,11 @@ func heal(amount: float) -> void:
 
 func is_dead() -> bool:
 	return current_health <= 0.0
+
+
+## Resets health after death (or to top it off at full otherwise).
+## Deliberately bypasses the is_dead() guard that take_damage()/heal() use
+## - reviving *from* dead is the entire point.
+func revive(to_amount: float = -1.0) -> void:
+	current_health = max_health if to_amount < 0.0 else clampf(to_amount, 0.0, max_health)
+	health_changed.emit(current_health, max_health)
