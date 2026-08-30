@@ -1,0 +1,687 @@
+[gd_resource type="SpriteFrames" load_steps=123 format=3]
+
+[ext_resource type="Texture2D" path="res://assets/characters/zayr/animations/idle/east/frame_000.png" id="zayr_idle_1"]
+[ext_resource type="Texture2D" path="res://assets/characters/zayr/animations/idle/east/frame_001.png" id="zayr_idle_2"]
+[ext_resource type="Texture2D" path="res://assets/characters/zayr/animations/idle/east/frame_002.png" id="zayr_idle_3"]
+[ext_resource type="Texture2D" path="res://assets/characters/zayr/animations/idle/east/frame_003.png" id="zayr_idle_4"]
+[ext_resource type="Texture2D" path="res://assets/characters/zayr/animations/combat_idle/east/frame_000.png" id="zayr_combat_idle_5"]
+[ext_resource type="Texture2D" path="res://assets/characters/zayr/animations/combat_idle/east/frame_001.png" id="zayr_combat_idle_6"]
+[ext_resource type="Texture2D" path="res://assets/characters/zayr/animations/combat_idle/east/frame_002.png" id="zayr_combat_idle_7"]
+[ext_resource type="Texture2D" path="res://assets/characters/zayr/animations/combat_idle/east/frame_003.png" id="zayr_combat_idle_8"]
+[ext_resource type="Texture2D" path="res://assets/characters/zayr/animations/combat_idle/east/frame_004.png" id="zayr_combat_idle_9"]
+[ext_resource type="Texture2D" path="res://assets/characters/zayr/animations/combat_idle/east/frame_005.png" id="zayr_combat_idle_10"]
+[ext_resource type="Texture2D" path="res://assets/characters/zayr/animations/combat_idle/east/frame_006.png" id="zayr_combat_idle_11"]
+[ext_resource type="Texture2D" path="res://assets/characters/zayr/animations/combat_idle/east/frame_007.png" id="zayr_combat_idle_12"]
+[ext_resource type="Texture2D" path="res://assets/characters/zayr/animations/run/east/frame_000.png" id="zayr_run_13"]
+[ext_resource type="Texture2D" path="res://assets/characters/zayr/animations/run/east/frame_001.png" id="zayr_run_14"]
+[ext_resource type="Texture2D" path="res://assets/characters/zayr/animations/run/east/frame_002.png" id="zayr_run_15"]
+[ext_resource type="Texture2D" path="res://assets/characters/zayr/animations/run/east/frame_003.png" id="zayr_run_16"]
+[ext_resource type="Texture2D" path="res://assets/characters/zayr/animations/run/east/frame_004.png" id="zayr_run_17"]
+[ext_resource type="Texture2D" path="res://assets/characters/zayr/animations/run/east/frame_005.png" id="zayr_run_18"]
+[ext_resource type="Texture2D" path="res://assets/characters/zayr/animations/run/east/frame_006.png" id="zayr_run_19"]
+[ext_resource type="Texture2D" path="res://assets/characters/zayr/animations/run/east/frame_007.png" id="zayr_run_20"]
+[ext_resource type="Texture2D" path="res://assets/characters/zayr/animations/run/east/frame_008.png" id="zayr_run_21"]
+[ext_resource type="Texture2D" path="res://assets/characters/zayr/animations/jump/east/frame_000.png" id="zayr_jump_22"]
+[ext_resource type="Texture2D" path="res://assets/characters/zayr/animations/jump/east/frame_001.png" id="zayr_jump_23"]
+[ext_resource type="Texture2D" path="res://assets/characters/zayr/animations/jump/east/frame_002.png" id="zayr_jump_24"]
+[ext_resource type="Texture2D" path="res://assets/characters/zayr/animations/jump/east/frame_003.png" id="zayr_jump_25"]
+[ext_resource type="Texture2D" path="res://assets/characters/zayr/animations/jump/east/frame_004.png" id="zayr_jump_26"]
+[ext_resource type="Texture2D" path="res://assets/characters/zayr/animations/jump/east/frame_005.png" id="zayr_jump_27"]
+[ext_resource type="Texture2D" path="res://assets/characters/zayr/animations/jump/east/frame_006.png" id="zayr_jump_28"]
+[ext_resource type="Texture2D" path="res://assets/characters/zayr/animations/fall/east/frame_000.png" id="zayr_fall_29"]
+[ext_resource type="Texture2D" path="res://assets/characters/zayr/animations/fall/east/frame_001.png" id="zayr_fall_30"]
+[ext_resource type="Texture2D" path="res://assets/characters/zayr/animations/fall/east/frame_002.png" id="zayr_fall_31"]
+[ext_resource type="Texture2D" path="res://assets/characters/zayr/animations/fall/east/frame_003.png" id="zayr_fall_32"]
+[ext_resource type="Texture2D" path="res://assets/characters/zayr/animations/fall/east/frame_004.png" id="zayr_fall_33"]
+[ext_resource type="Texture2D" path="res://assets/characters/zayr/animations/wall_slide/east/frame_000.png" id="zayr_wall_slide_34"]
+[ext_resource type="Texture2D" path="res://assets/characters/zayr/animations/wall_slide/east/frame_001.png" id="zayr_wall_slide_35"]
+[ext_resource type="Texture2D" path="res://assets/characters/zayr/animations/wall_slide/east/frame_002.png" id="zayr_wall_slide_36"]
+[ext_resource type="Texture2D" path="res://assets/characters/zayr/animations/wall_slide/east/frame_003.png" id="zayr_wall_slide_37"]
+[ext_resource type="Texture2D" path="res://assets/characters/zayr/animations/wall_slide/east/frame_004.png" id="zayr_wall_slide_38"]
+[ext_resource type="Texture2D" path="res://assets/characters/zayr/animations/dash/east/frame_000.png" id="zayr_dash_39"]
+[ext_resource type="Texture2D" path="res://assets/characters/zayr/animations/dash/east/frame_001.png" id="zayr_dash_40"]
+[ext_resource type="Texture2D" path="res://assets/characters/zayr/animations/dash/east/frame_002.png" id="zayr_dash_41"]
+[ext_resource type="Texture2D" path="res://assets/characters/zayr/animations/dash/east/frame_003.png" id="zayr_dash_42"]
+[ext_resource type="Texture2D" path="res://assets/characters/zayr/animations/dash/east/frame_004.png" id="zayr_dash_43"]
+[ext_resource type="Texture2D" path="res://assets/characters/zayr/animations/light_1/east/frame_000.png" id="zayr_light_1_44"]
+[ext_resource type="Texture2D" path="res://assets/characters/zayr/animations/light_1/east/frame_001.png" id="zayr_light_1_45"]
+[ext_resource type="Texture2D" path="res://assets/characters/zayr/animations/light_1/east/frame_002.png" id="zayr_light_1_46"]
+[ext_resource type="Texture2D" path="res://assets/characters/zayr/animations/light_1/east/frame_003.png" id="zayr_light_1_47"]
+[ext_resource type="Texture2D" path="res://assets/characters/zayr/animations/light_1/east/frame_004.png" id="zayr_light_1_48"]
+[ext_resource type="Texture2D" path="res://assets/characters/zayr/animations/light_1/east/frame_005.png" id="zayr_light_1_49"]
+[ext_resource type="Texture2D" path="res://assets/characters/zayr/animations/light_1/east/frame_006.png" id="zayr_light_1_50"]
+[ext_resource type="Texture2D" path="res://assets/characters/zayr/animations/light_2/east/frame_000.png" id="zayr_light_2_51"]
+[ext_resource type="Texture2D" path="res://assets/characters/zayr/animations/light_2/east/frame_001.png" id="zayr_light_2_52"]
+[ext_resource type="Texture2D" path="res://assets/characters/zayr/animations/light_2/east/frame_002.png" id="zayr_light_2_53"]
+[ext_resource type="Texture2D" path="res://assets/characters/zayr/animations/light_2/east/frame_003.png" id="zayr_light_2_54"]
+[ext_resource type="Texture2D" path="res://assets/characters/zayr/animations/light_2/east/frame_004.png" id="zayr_light_2_55"]
+[ext_resource type="Texture2D" path="res://assets/characters/zayr/animations/light_2/east/frame_005.png" id="zayr_light_2_56"]
+[ext_resource type="Texture2D" path="res://assets/characters/zayr/animations/light_2/east/frame_006.png" id="zayr_light_2_57"]
+[ext_resource type="Texture2D" path="res://assets/characters/zayr/animations/light_3/east/frame_000.png" id="zayr_light_3_58"]
+[ext_resource type="Texture2D" path="res://assets/characters/zayr/animations/light_3/east/frame_001.png" id="zayr_light_3_59"]
+[ext_resource type="Texture2D" path="res://assets/characters/zayr/animations/light_3/east/frame_002.png" id="zayr_light_3_60"]
+[ext_resource type="Texture2D" path="res://assets/characters/zayr/animations/light_3/east/frame_003.png" id="zayr_light_3_61"]
+[ext_resource type="Texture2D" path="res://assets/characters/zayr/animations/light_3/east/frame_004.png" id="zayr_light_3_62"]
+[ext_resource type="Texture2D" path="res://assets/characters/zayr/animations/light_3/east/frame_005.png" id="zayr_light_3_63"]
+[ext_resource type="Texture2D" path="res://assets/characters/zayr/animations/light_3/east/frame_006.png" id="zayr_light_3_64"]
+[ext_resource type="Texture2D" path="res://assets/characters/zayr/animations/light_3/east/frame_007.png" id="zayr_light_3_65"]
+[ext_resource type="Texture2D" path="res://assets/characters/zayr/animations/light_3/east/frame_008.png" id="zayr_light_3_66"]
+[ext_resource type="Texture2D" path="res://assets/characters/zayr/animations/heavy/east/frame_000.png" id="zayr_heavy_67"]
+[ext_resource type="Texture2D" path="res://assets/characters/zayr/animations/heavy/east/frame_001.png" id="zayr_heavy_68"]
+[ext_resource type="Texture2D" path="res://assets/characters/zayr/animations/heavy/east/frame_002.png" id="zayr_heavy_69"]
+[ext_resource type="Texture2D" path="res://assets/characters/zayr/animations/heavy/east/frame_003.png" id="zayr_heavy_70"]
+[ext_resource type="Texture2D" path="res://assets/characters/zayr/animations/heavy/east/frame_004.png" id="zayr_heavy_71"]
+[ext_resource type="Texture2D" path="res://assets/characters/zayr/animations/heavy/east/frame_005.png" id="zayr_heavy_72"]
+[ext_resource type="Texture2D" path="res://assets/characters/zayr/animations/heavy/east/frame_006.png" id="zayr_heavy_73"]
+[ext_resource type="Texture2D" path="res://assets/characters/zayr/animations/heavy/east/frame_007.png" id="zayr_heavy_74"]
+[ext_resource type="Texture2D" path="res://assets/characters/zayr/animations/heavy/east/frame_008.png" id="zayr_heavy_75"]
+[ext_resource type="Texture2D" path="res://assets/characters/zayr/animations/aerial/east/frame_000.png" id="zayr_aerial_76"]
+[ext_resource type="Texture2D" path="res://assets/characters/zayr/animations/aerial/east/frame_001.png" id="zayr_aerial_77"]
+[ext_resource type="Texture2D" path="res://assets/characters/zayr/animations/aerial/east/frame_002.png" id="zayr_aerial_78"]
+[ext_resource type="Texture2D" path="res://assets/characters/zayr/animations/aerial/east/frame_003.png" id="zayr_aerial_79"]
+[ext_resource type="Texture2D" path="res://assets/characters/zayr/animations/aerial/east/frame_004.png" id="zayr_aerial_80"]
+[ext_resource type="Texture2D" path="res://assets/characters/zayr/animations/aerial/east/frame_005.png" id="zayr_aerial_81"]
+[ext_resource type="Texture2D" path="res://assets/characters/zayr/animations/aerial/east/frame_006.png" id="zayr_aerial_82"]
+[ext_resource type="Texture2D" path="res://assets/characters/zayr/animations/ranged/east/frame_000.png" id="zayr_ranged_83"]
+[ext_resource type="Texture2D" path="res://assets/characters/zayr/animations/ranged/east/frame_001.png" id="zayr_ranged_84"]
+[ext_resource type="Texture2D" path="res://assets/characters/zayr/animations/ranged/east/frame_002.png" id="zayr_ranged_85"]
+[ext_resource type="Texture2D" path="res://assets/characters/zayr/animations/ranged/east/frame_003.png" id="zayr_ranged_86"]
+[ext_resource type="Texture2D" path="res://assets/characters/zayr/animations/ranged/east/frame_004.png" id="zayr_ranged_87"]
+[ext_resource type="Texture2D" path="res://assets/characters/zayr/animations/ranged/east/frame_005.png" id="zayr_ranged_88"]
+[ext_resource type="Texture2D" path="res://assets/characters/zayr/animations/ranged/east/frame_006.png" id="zayr_ranged_89"]
+[ext_resource type="Texture2D" path="res://assets/characters/zayr/animations/charged_start/east/frame_000.png" id="zayr_charged_start_90"]
+[ext_resource type="Texture2D" path="res://assets/characters/zayr/animations/charged_start/east/frame_001.png" id="zayr_charged_start_91"]
+[ext_resource type="Texture2D" path="res://assets/characters/zayr/animations/charged_start/east/frame_002.png" id="zayr_charged_start_92"]
+[ext_resource type="Texture2D" path="res://assets/characters/zayr/animations/charged_start/east/frame_003.png" id="zayr_charged_start_93"]
+[ext_resource type="Texture2D" path="res://assets/characters/zayr/animations/charged_start/east/frame_004.png" id="zayr_charged_start_94"]
+[ext_resource type="Texture2D" path="res://assets/characters/zayr/animations/charged_hold/east/frame_000.png" id="zayr_charged_hold_95"]
+[ext_resource type="Texture2D" path="res://assets/characters/zayr/animations/charged_hold/east/frame_001.png" id="zayr_charged_hold_96"]
+[ext_resource type="Texture2D" path="res://assets/characters/zayr/animations/charged_hold/east/frame_002.png" id="zayr_charged_hold_97"]
+[ext_resource type="Texture2D" path="res://assets/characters/zayr/animations/charged_hold/east/frame_003.png" id="zayr_charged_hold_98"]
+[ext_resource type="Texture2D" path="res://assets/characters/zayr/animations/charged_hold/east/frame_004.png" id="zayr_charged_hold_99"]
+[ext_resource type="Texture2D" path="res://assets/characters/zayr/animations/charged_release/east/frame_000.png" id="zayr_charged_release_100"]
+[ext_resource type="Texture2D" path="res://assets/characters/zayr/animations/charged_release/east/frame_001.png" id="zayr_charged_release_101"]
+[ext_resource type="Texture2D" path="res://assets/characters/zayr/animations/charged_release/east/frame_002.png" id="zayr_charged_release_102"]
+[ext_resource type="Texture2D" path="res://assets/characters/zayr/animations/charged_release/east/frame_003.png" id="zayr_charged_release_103"]
+[ext_resource type="Texture2D" path="res://assets/characters/zayr/animations/charged_release/east/frame_004.png" id="zayr_charged_release_104"]
+[ext_resource type="Texture2D" path="res://assets/characters/zayr/animations/charged_release/east/frame_005.png" id="zayr_charged_release_105"]
+[ext_resource type="Texture2D" path="res://assets/characters/zayr/animations/charged_release/east/frame_006.png" id="zayr_charged_release_106"]
+[ext_resource type="Texture2D" path="res://assets/characters/zayr/animations/charged_release/east/frame_007.png" id="zayr_charged_release_107"]
+[ext_resource type="Texture2D" path="res://assets/characters/zayr/animations/charged_release/east/frame_008.png" id="zayr_charged_release_108"]
+[ext_resource type="Texture2D" path="res://assets/characters/zayr/animations/hurt/east/frame_000.png" id="zayr_hurt_109"]
+[ext_resource type="Texture2D" path="res://assets/characters/zayr/animations/hurt/east/frame_001.png" id="zayr_hurt_110"]
+[ext_resource type="Texture2D" path="res://assets/characters/zayr/animations/hurt/east/frame_002.png" id="zayr_hurt_111"]
+[ext_resource type="Texture2D" path="res://assets/characters/zayr/animations/hurt/east/frame_003.png" id="zayr_hurt_112"]
+[ext_resource type="Texture2D" path="res://assets/characters/zayr/animations/hurt/east/frame_004.png" id="zayr_hurt_113"]
+[ext_resource type="Texture2D" path="res://assets/characters/zayr/animations/death/east/frame_000.png" id="zayr_death_114"]
+[ext_resource type="Texture2D" path="res://assets/characters/zayr/animations/death/east/frame_001.png" id="zayr_death_115"]
+[ext_resource type="Texture2D" path="res://assets/characters/zayr/animations/death/east/frame_002.png" id="zayr_death_116"]
+[ext_resource type="Texture2D" path="res://assets/characters/zayr/animations/death/east/frame_003.png" id="zayr_death_117"]
+[ext_resource type="Texture2D" path="res://assets/characters/zayr/animations/death/east/frame_004.png" id="zayr_death_118"]
+[ext_resource type="Texture2D" path="res://assets/characters/zayr/animations/death/east/frame_005.png" id="zayr_death_119"]
+[ext_resource type="Texture2D" path="res://assets/characters/zayr/animations/death/east/frame_006.png" id="zayr_death_120"]
+[ext_resource type="Texture2D" path="res://assets/characters/zayr/animations/death/east/frame_007.png" id="zayr_death_121"]
+[ext_resource type="Texture2D" path="res://assets/characters/zayr/animations/death/east/frame_008.png" id="zayr_death_122"]
+
+[resource]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("zayr_idle_1")
+},
+{
+"duration": 1.0,
+"texture": ExtResource("zayr_idle_2")
+},
+{
+"duration": 1.0,
+"texture": ExtResource("zayr_idle_3")
+},
+{
+"duration": 1.0,
+"texture": ExtResource("zayr_idle_4")
+}],
+"loop": true,
+"name": &"idle",
+"speed": 6.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("zayr_combat_idle_5")
+},
+{
+"duration": 1.0,
+"texture": ExtResource("zayr_combat_idle_6")
+},
+{
+"duration": 1.0,
+"texture": ExtResource("zayr_combat_idle_7")
+},
+{
+"duration": 1.0,
+"texture": ExtResource("zayr_combat_idle_8")
+},
+{
+"duration": 1.0,
+"texture": ExtResource("zayr_combat_idle_9")
+},
+{
+"duration": 1.0,
+"texture": ExtResource("zayr_combat_idle_10")
+},
+{
+"duration": 1.0,
+"texture": ExtResource("zayr_combat_idle_11")
+},
+{
+"duration": 1.0,
+"texture": ExtResource("zayr_combat_idle_12")
+}],
+"loop": true,
+"name": &"combat_idle",
+"speed": 8.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("zayr_run_13")
+},
+{
+"duration": 1.0,
+"texture": ExtResource("zayr_run_14")
+},
+{
+"duration": 1.0,
+"texture": ExtResource("zayr_run_15")
+},
+{
+"duration": 1.0,
+"texture": ExtResource("zayr_run_16")
+},
+{
+"duration": 1.0,
+"texture": ExtResource("zayr_run_17")
+},
+{
+"duration": 1.0,
+"texture": ExtResource("zayr_run_18")
+},
+{
+"duration": 1.0,
+"texture": ExtResource("zayr_run_19")
+},
+{
+"duration": 1.0,
+"texture": ExtResource("zayr_run_20")
+},
+{
+"duration": 1.0,
+"texture": ExtResource("zayr_run_21")
+}],
+"loop": true,
+"name": &"run",
+"speed": 12.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("zayr_jump_22")
+},
+{
+"duration": 1.0,
+"texture": ExtResource("zayr_jump_23")
+},
+{
+"duration": 1.0,
+"texture": ExtResource("zayr_jump_24")
+},
+{
+"duration": 1.0,
+"texture": ExtResource("zayr_jump_25")
+},
+{
+"duration": 1.0,
+"texture": ExtResource("zayr_jump_26")
+},
+{
+"duration": 1.0,
+"texture": ExtResource("zayr_jump_27")
+},
+{
+"duration": 1.0,
+"texture": ExtResource("zayr_jump_28")
+}],
+"loop": false,
+"name": &"jump",
+"speed": 20.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("zayr_fall_29")
+},
+{
+"duration": 1.0,
+"texture": ExtResource("zayr_fall_30")
+},
+{
+"duration": 1.0,
+"texture": ExtResource("zayr_fall_31")
+},
+{
+"duration": 1.0,
+"texture": ExtResource("zayr_fall_32")
+},
+{
+"duration": 1.0,
+"texture": ExtResource("zayr_fall_33")
+}],
+"loop": true,
+"name": &"fall",
+"speed": 9.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("zayr_wall_slide_34")
+},
+{
+"duration": 1.0,
+"texture": ExtResource("zayr_wall_slide_35")
+},
+{
+"duration": 1.0,
+"texture": ExtResource("zayr_wall_slide_36")
+},
+{
+"duration": 1.0,
+"texture": ExtResource("zayr_wall_slide_37")
+},
+{
+"duration": 1.0,
+"texture": ExtResource("zayr_wall_slide_38")
+}],
+"loop": true,
+"name": &"wall_slide",
+"speed": 8.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("zayr_dash_39")
+},
+{
+"duration": 1.0,
+"texture": ExtResource("zayr_dash_40")
+},
+{
+"duration": 1.0,
+"texture": ExtResource("zayr_dash_41")
+},
+{
+"duration": 1.0,
+"texture": ExtResource("zayr_dash_42")
+},
+{
+"duration": 1.0,
+"texture": ExtResource("zayr_dash_43")
+}],
+"loop": false,
+"name": &"dash",
+"speed": 32.0
+}, {
+"frames": [{
+"duration": 0.4,
+"texture": ExtResource("zayr_light_1_44")
+},
+{
+"duration": 0.4,
+"texture": ExtResource("zayr_light_1_45")
+},
+{
+"duration": 0.4,
+"texture": ExtResource("zayr_light_1_46")
+},
+{
+"duration": 0.4,
+"texture": ExtResource("zayr_light_1_47")
+},
+{
+"duration": 1.8,
+"texture": ExtResource("zayr_light_1_48")
+},
+{
+"duration": 1.8,
+"texture": ExtResource("zayr_light_1_49")
+},
+{
+"duration": 1.8,
+"texture": ExtResource("zayr_light_1_50")
+}],
+"loop": false,
+"name": &"light_1",
+"speed": 20.0
+}, {
+"frames": [{
+"duration": 0.3828,
+"texture": ExtResource("zayr_light_2_51")
+},
+{
+"duration": 0.3828,
+"texture": ExtResource("zayr_light_2_52")
+},
+{
+"duration": 0.3828,
+"texture": ExtResource("zayr_light_2_53")
+},
+{
+"duration": 0.3828,
+"texture": ExtResource("zayr_light_2_54")
+},
+{
+"duration": 1.8229,
+"texture": ExtResource("zayr_light_2_55")
+},
+{
+"duration": 1.8229,
+"texture": ExtResource("zayr_light_2_56")
+},
+{
+"duration": 1.8229,
+"texture": ExtResource("zayr_light_2_57")
+}],
+"loop": false,
+"name": &"light_2",
+"speed": 21.875
+}, {
+"frames": [{
+"duration": 0.4286,
+"texture": ExtResource("zayr_light_3_58")
+},
+{
+"duration": 0.4286,
+"texture": ExtResource("zayr_light_3_59")
+},
+{
+"duration": 0.4286,
+"texture": ExtResource("zayr_light_3_60")
+},
+{
+"duration": 0.4286,
+"texture": ExtResource("zayr_light_3_61")
+},
+{
+"duration": 0.4286,
+"texture": ExtResource("zayr_light_3_62")
+},
+{
+"duration": 1.7143,
+"texture": ExtResource("zayr_light_3_63")
+},
+{
+"duration": 1.7143,
+"texture": ExtResource("zayr_light_3_64")
+},
+{
+"duration": 1.7143,
+"texture": ExtResource("zayr_light_3_65")
+},
+{
+"duration": 1.7143,
+"texture": ExtResource("zayr_light_3_66")
+}],
+"loop": false,
+"name": &"light_3",
+"speed": 21.4286
+}, {
+"frames": [{
+"duration": 0.8571,
+"texture": ExtResource("zayr_heavy_67")
+},
+{
+"duration": 0.8571,
+"texture": ExtResource("zayr_heavy_68")
+},
+{
+"duration": 0.8571,
+"texture": ExtResource("zayr_heavy_69")
+},
+{
+"duration": 0.8571,
+"texture": ExtResource("zayr_heavy_70")
+},
+{
+"duration": 0.8571,
+"texture": ExtResource("zayr_heavy_71")
+},
+{
+"duration": 1.1786,
+"texture": ExtResource("zayr_heavy_72")
+},
+{
+"duration": 1.1786,
+"texture": ExtResource("zayr_heavy_73")
+},
+{
+"duration": 1.1786,
+"texture": ExtResource("zayr_heavy_74")
+},
+{
+"duration": 1.1786,
+"texture": ExtResource("zayr_heavy_75")
+}],
+"loop": false,
+"name": &"heavy",
+"speed": 8.5714
+}, {
+"frames": [{
+"duration": 0.4242,
+"texture": ExtResource("zayr_aerial_76")
+},
+{
+"duration": 0.4242,
+"texture": ExtResource("zayr_aerial_77")
+},
+{
+"duration": 0.4242,
+"texture": ExtResource("zayr_aerial_78")
+},
+{
+"duration": 1.4318,
+"texture": ExtResource("zayr_aerial_79")
+},
+{
+"duration": 1.4318,
+"texture": ExtResource("zayr_aerial_80")
+},
+{
+"duration": 1.4318,
+"texture": ExtResource("zayr_aerial_81")
+},
+{
+"duration": 1.4318,
+"texture": ExtResource("zayr_aerial_82")
+}],
+"loop": false,
+"name": &"aerial",
+"speed": 21.2121
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("zayr_ranged_83")
+},
+{
+"duration": 1.0,
+"texture": ExtResource("zayr_ranged_84")
+},
+{
+"duration": 1.0,
+"texture": ExtResource("zayr_ranged_85")
+},
+{
+"duration": 1.0,
+"texture": ExtResource("zayr_ranged_86")
+},
+{
+"duration": 1.0,
+"texture": ExtResource("zayr_ranged_87")
+},
+{
+"duration": 1.0,
+"texture": ExtResource("zayr_ranged_88")
+},
+{
+"duration": 1.0,
+"texture": ExtResource("zayr_ranged_89")
+}],
+"loop": false,
+"name": &"ranged",
+"speed": 47.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("zayr_charged_start_90")
+},
+{
+"duration": 1.0,
+"texture": ExtResource("zayr_charged_start_91")
+},
+{
+"duration": 1.0,
+"texture": ExtResource("zayr_charged_start_92")
+},
+{
+"duration": 1.0,
+"texture": ExtResource("zayr_charged_start_93")
+},
+{
+"duration": 1.0,
+"texture": ExtResource("zayr_charged_start_94")
+}],
+"loop": false,
+"name": &"charged_start",
+"speed": 20.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("zayr_charged_hold_95")
+},
+{
+"duration": 1.0,
+"texture": ExtResource("zayr_charged_hold_96")
+},
+{
+"duration": 1.0,
+"texture": ExtResource("zayr_charged_hold_97")
+},
+{
+"duration": 1.0,
+"texture": ExtResource("zayr_charged_hold_98")
+},
+{
+"duration": 1.0,
+"texture": ExtResource("zayr_charged_hold_99")
+}],
+"loop": true,
+"name": &"charged_hold",
+"speed": 8.0
+}, {
+"frames": [{
+"duration": 0.75,
+"texture": ExtResource("zayr_charged_release_100")
+},
+{
+"duration": 0.75,
+"texture": ExtResource("zayr_charged_release_101")
+},
+{
+"duration": 0.75,
+"texture": ExtResource("zayr_charged_release_102")
+},
+{
+"duration": 0.75,
+"texture": ExtResource("zayr_charged_release_103")
+},
+{
+"duration": 1.2,
+"texture": ExtResource("zayr_charged_release_104")
+},
+{
+"duration": 1.2,
+"texture": ExtResource("zayr_charged_release_105")
+},
+{
+"duration": 1.2,
+"texture": ExtResource("zayr_charged_release_106")
+},
+{
+"duration": 1.2,
+"texture": ExtResource("zayr_charged_release_107")
+},
+{
+"duration": 1.2,
+"texture": ExtResource("zayr_charged_release_108")
+}],
+"loop": false,
+"name": &"charged_release",
+"speed": 20.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("zayr_hurt_109")
+},
+{
+"duration": 1.0,
+"texture": ExtResource("zayr_hurt_110")
+},
+{
+"duration": 1.0,
+"texture": ExtResource("zayr_hurt_111")
+},
+{
+"duration": 1.0,
+"texture": ExtResource("zayr_hurt_112")
+},
+{
+"duration": 1.0,
+"texture": ExtResource("zayr_hurt_113")
+}],
+"loop": false,
+"name": &"hurt",
+"speed": 15.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("zayr_death_114")
+},
+{
+"duration": 1.0,
+"texture": ExtResource("zayr_death_115")
+},
+{
+"duration": 1.0,
+"texture": ExtResource("zayr_death_116")
+},
+{
+"duration": 1.0,
+"texture": ExtResource("zayr_death_117")
+},
+{
+"duration": 1.0,
+"texture": ExtResource("zayr_death_118")
+},
+{
+"duration": 1.0,
+"texture": ExtResource("zayr_death_119")
+},
+{
+"duration": 1.0,
+"texture": ExtResource("zayr_death_120")
+},
+{
+"duration": 1.0,
+"texture": ExtResource("zayr_death_121")
+},
+{
+"duration": 1.0,
+"texture": ExtResource("zayr_death_122")
+}],
+"loop": false,
+"name": &"death",
+"speed": 11.0
+}]
