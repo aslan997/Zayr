@@ -1,4 +1,4 @@
-[gd_scene load_steps=12 format=3]
+[gd_scene load_steps=40 format=3]
 
 [ext_resource type="Script" path="res://scripts/player/PlayerController.gd" id="1_ctrl"]
 [ext_resource type="Script" path="res://scripts/player/PlayerMovement.gd" id="2_move"]
@@ -9,6 +9,21 @@
 [ext_resource type="Script" path="res://scripts/player/PlayerCombat.gd" id="7_combat"]
 [ext_resource type="Script" path="res://scripts/combat/Hitbox.gd" id="8_hitbox"]
 [ext_resource type="Script" path="res://scripts/player/PlayerVeyrStep.gd" id="9_veyr_step"]
+[ext_resource type="Texture2D" path="res://assets/vfx/particle_dot.tres" id="10_particle_dot"]
+[ext_resource type="Script" path="res://scripts/player/PlayerRangedAttack.gd" id="11_ranged"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/Projectile.tscn" id="12_projectile"]
+[ext_resource type="Texture2D" path="res://assets/characters/zayr/weapons/veyr_edge.png" id="43_veyr_edge"]
+[ext_resource type="SpriteFrames" path="res://assets/characters/zayr/ZayrSpriteFrames.tres" id="44_sprite_frames"]
+
+[sub_resource type="ParticleProcessMaterial" id="ParticleProcessMaterial_veyr"]
+particle_flag_disable_z = true
+spread = 180.0
+initial_velocity_min = 40.0
+initial_velocity_max = 90.0
+gravity = Vector3(0, 0, 0)
+scale_min = 0.2
+scale_max = 0.55
+color = Color(0.72, 0.53, 1.3, 1)
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_body"]
 size = Vector2(28, 46)
@@ -25,7 +40,36 @@ script = ExtResource("1_ctrl")
 position = Vector2(0, -23)
 shape = SubResource("RectangleShape2D_body")
 
-[node name="Visual" type="Polygon2D" parent="."]
+[node name="VisualRoot" type="Node2D" parent="."]
+
+[node name="CharacterSprite" type="Node2D" parent="VisualRoot"]
+
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="VisualRoot/CharacterSprite"]
+texture_filter = 1
+scale = Vector2(1.0, 1.0)
+sprite_frames = ExtResource("44_sprite_frames")
+animation = &"idle"
+centered = false
+offset = Vector2(-26.5, -62)
+
+[node name="WeaponManifestation" type="Node2D" parent="VisualRoot"]
+
+[node name="VeyrEdge" type="Sprite2D" parent="VisualRoot/WeaponManifestation"]
+visible = false
+texture = ExtResource("43_veyr_edge")
+centered = false
+offset = Vector2(-304, -832)
+
+[node name="JinnFireLayer" type="Node2D" parent="VisualRoot"]
+
+[node name="VeyrLayer" type="Node2D" parent="VisualRoot"]
+
+[node name="AbilityVFX" type="Node2D" parent="VisualRoot"]
+
+[node name="DamageVFX" type="Node2D" parent="VisualRoot"]
+
+[node name="DebugVisual" type="Polygon2D" parent="."]
+visible = false
 color = Color(0.55, 0.75, 0.95, 1)
 polygon = PackedVector2Array(-14, -46, 14, -46, 14, 0, -14, 0)
 
@@ -54,6 +98,10 @@ shape = SubResource("RectangleShape2D_body")
 
 [node name="Combat" type="Node" parent="."]
 script = ExtResource("7_combat")
+
+[node name="RangedAttack" type="Node" parent="."]
+script = ExtResource("11_ranged")
+projectile_scene = ExtResource("12_projectile")
 
 [node name="Hitbox" type="Area2D" parent="."]
 position = Vector2(26, -23)
@@ -88,3 +136,23 @@ polygon = PackedVector2Array(12, 0, 3, 3, 0, 12, -3, 3, -12, 0, -3, -3, 0, -12, 
 top_level = true
 visible = false
 polygon = PackedVector2Array(12, 0, 3, 3, 0, 12, -3, 3, -12, 0, -3, -3, 0, -12, 3, -3)
+
+[node name="DepartParticles" type="GPUParticles2D" parent="."]
+top_level = true
+emitting = false
+amount = 18
+lifetime = 0.4
+one_shot = true
+explosiveness = 1.0
+process_material = SubResource("ParticleProcessMaterial_veyr")
+texture = ExtResource("10_particle_dot")
+
+[node name="ArriveParticles" type="GPUParticles2D" parent="."]
+top_level = true
+emitting = false
+amount = 18
+lifetime = 0.4
+one_shot = true
+explosiveness = 1.0
+process_material = SubResource("ParticleProcessMaterial_veyr")
+texture = ExtResource("10_particle_dot")
