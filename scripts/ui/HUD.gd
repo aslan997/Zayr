@@ -4,13 +4,23 @@ class_name HUD
 ## via the "player" group and a boss via the "boss" group (same lookup
 ## pattern EnemyAI/BossAI already use to find the player) so it doesn't
 ## need manual wiring per region - just instance HUD.tscn. The boss bar
-## stays hidden if no "boss" group node exists in the scene.
+## only shows while the player is within vicinity_range of the boss (not
+## from the moment a "boss" group node merely exists in the scene, which
+## could be far away and not yet encountered) and stays hidden if no
+## "boss" group node exists at all.
 
 const BOSS_BAR_HIDE_DELAY: float = 1.0
+## Not from a design brief - placeholder, tunable. How close the player
+## needs to be to a boss before its health bar appears.
+@export var vicinity_range: float = 320.0
 
 @onready var health_bar: ResourceBar = $HealthBar
 @onready var veyr_bar: ResourceBar = $VeyrBar
 @onready var boss_bar: ResourceBar = $BossBar
+
+var _player: Node2D
+var _boss: Node2D
+var _boss_dead: bool = false
 
 
 func _ready() -> void:
@@ -22,12 +32,20 @@ func _ready() -> void:
 	call_deferred("_connect_to_boss")
 
 
-func _connect_to_player() -> void:
-	var player: Node = get_tree().get_first_node_in_group("player")
-	if not player:
+func _process(_delta: float) -> void:
+	if not _boss or _boss_dead or not _player:
 		return
-	var health: HealthComponent = player.get_node("HealthComponent")
-	var veyr: VeyrComponent = player.get_node("VeyrComponent")
+	var in_range: bool = _player.global_position.distance_to(_boss.global_position) <= vicinity_range
+	if boss_bar.visible != in_range:
+		boss_bar.visible = in_range
+
+
+func _connect_to_player() -> void:
+	_player = get_tree().get_first_node_in_group("player")
+	if not _player:
+		return
+	var health: HealthComponent = _player.get_node("HealthComponent")
+	var veyr: VeyrComponent = _player.get_node("VeyrComponent")
 	health.health_changed.connect(_on_health_changed)
 	veyr.veyr_changed.connect(_on_veyr_changed)
 	_on_health_changed(health.current_health, health.max_health)
@@ -35,13 +53,12 @@ func _connect_to_player() -> void:
 
 
 func _connect_to_boss() -> void:
-	var boss: Node = get_tree().get_first_node_in_group("boss")
-	if not boss:
+	_boss = get_tree().get_first_node_in_group("boss")
+	if not _boss:
 		return
-	var health: HealthComponent = boss.get_node("HealthComponent")
+	var health: HealthComponent = _boss.get_node("HealthComponent")
 	health.health_changed.connect(_on_boss_health_changed)
 	health.died.connect(_on_boss_died)
-	boss_bar.visible = true
 	_on_boss_health_changed(health.current_health, health.max_health)
 
 
@@ -58,5 +75,6 @@ func _on_boss_health_changed(current: float, max_value: float) -> void:
 
 
 func _on_boss_died() -> void:
+	_boss_dead = true
 	# Let the player see the bar hit zero before it disappears.
 	get_tree().create_timer(BOSS_BAR_HIDE_DELAY).timeout.connect(func() -> void: boss_bar.visible = false)

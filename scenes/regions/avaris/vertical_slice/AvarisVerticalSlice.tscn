@@ -1,0 +1,948 @@
+[gd_scene load_steps=21 format=3]
+
+[ext_resource type="Script" path="res://scenes/regions/avaris/vertical_slice/AvarisVerticalSlice.gd" id="1_root"]
+[ext_resource type="PackedScene" path="res://scenes/ui/HUD.tscn" id="2_hud"]
+[ext_resource type="PackedScene" path="res://scenes/player/Player.tscn" id="3_player"]
+[ext_resource type="Script" path="res://scripts/systems/PlayerTrigger.gd" id="4_trigger"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/Enemy.tscn" id="5_enemy"]
+[ext_resource type="PackedScene" path="res://scenes/enemies/RangedEnemy.tscn" id="6_ranged_enemy"]
+[ext_resource type="PackedScene" path="res://scenes/bosses/MiniBoss.tscn" id="7_miniboss"]
+[ext_resource type="Script" path="res://scripts/systems/MemorySequence.gd" id="8_memory"]
+[ext_resource type="Script" path="res://scripts/systems/RhaekTeaser.gd" id="9_rhaek"]
+[ext_resource type="Texture2D" path="res://assets/vfx/particle_dot.tres" id="10_particle_dot"]
+[ext_resource type="Shader" path="res://shaders/Vignette.gdshader" id="11_vignette"]
+[ext_resource type="Script" path="res://scripts/systems/AvarisReveal.gd" id="12_reveal"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_vignette"]
+shader = ExtResource("11_vignette")
+shader_parameter/intensity = 0.32
+shader_parameter/radius = 0.95
+shader_parameter/softness = 0.75
+
+[sub_resource type="Environment" id="Environment_glow"]
+background_mode = 3
+glow_enabled = true
+glow_intensity = 0.5
+glow_bloom = 0.03
+glow_hdr_threshold = 1.0
+adjustment_enabled = true
+adjustment_brightness = 1.0
+adjustment_contrast = 1.08
+adjustment_saturation = 0.92
+glow_blend_mode = 2
+
+[sub_resource type="ParticleProcessMaterial" id="ParticleProcessMaterial_rhaek"]
+particle_flag_disable_z = true
+spread = 180.0
+initial_velocity_min = 30.0
+initial_velocity_max = 70.0
+gravity = Vector3(0, 0, 0)
+scale_min = 0.2
+scale_max = 0.55
+color = Color(0.72, 0.53, 1.3, 1)
+
+[sub_resource type="ParticleProcessMaterial" id="ParticleProcessMaterial_chamberdust"]
+particle_flag_disable_z = true
+emission_shape = 1
+emission_box_extents = Vector3(260, 100, 1)
+direction = Vector3(0, -1, 0)
+spread = 30.0
+initial_velocity_min = 4.0
+initial_velocity_max = 10.0
+gravity = Vector3(0, 0, 0)
+scale_min = 0.3
+scale_max = 0.7
+color = Color(0.55, 0.5, 0.7, 0.5)
+
+[sub_resource type="ParticleProcessMaterial" id="ParticleProcessMaterial_vistamotes"]
+particle_flag_disable_z = true
+emission_shape = 1
+emission_box_extents = Vector3(450, 300, 1)
+direction = Vector3(1, -0.3, 0)
+spread = 25.0
+initial_velocity_min = 6.0
+initial_velocity_max = 16.0
+gravity = Vector3(0, 0, 0)
+scale_min = 0.4
+scale_max = 1.0
+color = Color(0.6, 0.65, 0.85, 0.55)
+
+[sub_resource type="Gradient" id="Gradient_light"]
+colors = PackedColorArray(1, 1, 1, 1, 1, 1, 1, 0)
+
+[sub_resource type="GradientTexture2D" id="LightFalloff"]
+gradient = SubResource("Gradient_light")
+width = 256
+height = 256
+fill = 1
+fill_from = Vector2(0.5, 0.5)
+fill_to = Vector2(1, 0.5)
+
+[sub_resource type="RectangleShape2D" id="Shape_ChamberFloor"]
+size = Vector2(580, 40)
+
+[sub_resource type="RectangleShape2D" id="Shape_ChamberWall"]
+size = Vector2(40, 240)
+
+[sub_resource type="RectangleShape2D" id="Shape_ChamberCeiling"]
+size = Vector2(360, 40)
+
+[sub_resource type="RectangleShape2D" id="Shape_FloorPostChamber"]
+size = Vector2(480, 40)
+
+[sub_resource type="RectangleShape2D" id="Shape_RaisedPlatform1"]
+size = Vector2(200, 24)
+
+[sub_resource type="RectangleShape2D" id="Shape_LowerFloor"]
+size = Vector2(680, 40)
+
+[sub_resource type="RectangleShape2D" id="Shape_ShaftWall"]
+size = Vector2(40, 240)
+
+[sub_resource type="RectangleShape2D" id="Shape_Step"]
+size = Vector2(160, 24)
+
+[sub_resource type="RectangleShape2D" id="Shape_DashLanding"]
+size = Vector2(300, 40)
+
+[sub_resource type="RectangleShape2D" id="Shape_KillZone"]
+size = Vector2(10200, 200)
+
+[sub_resource type="RectangleShape2D" id="Shape_CombatFloor"]
+size = Vector2(1400, 40)
+
+[sub_resource type="RectangleShape2D" id="Shape_VeyrFloor"]
+size = Vector2(1000, 40)
+
+[sub_resource type="RectangleShape2D" id="Shape_RevealLedge"]
+size = Vector2(200, 40)
+
+[sub_resource type="RectangleShape2D" id="Shape_Overlook"]
+size = Vector2(220, 32)
+
+[sub_resource type="RectangleShape2D" id="Shape_DescendStep"]
+size = Vector2(200, 32)
+
+[sub_resource type="RectangleShape2D" id="Shape_ExplorationFloor"]
+size = Vector2(600, 40)
+
+[sub_resource type="RectangleShape2D" id="Shape_RangedFloor"]
+size = Vector2(800, 40)
+
+[sub_resource type="RectangleShape2D" id="Shape_BossArenaFloor"]
+size = Vector2(1200, 40)
+
+[sub_resource type="RectangleShape2D" id="Shape_CoverBlock"]
+size = Vector2(50, 70)
+
+[sub_resource type="RectangleShape2D" id="Shape_MemoryFloor"]
+size = Vector2(700, 40)
+
+[sub_resource type="RectangleShape2D" id="Shape_MemoryTrigger"]
+size = Vector2(100, 140)
+
+[sub_resource type="RectangleShape2D" id="Shape_EndFloor"]
+size = Vector2(500, 40)
+
+[sub_resource type="RectangleShape2D" id="Shape_EndWall"]
+size = Vector2(40, 240)
+
+[node name="AvarisVerticalSlice" type="Node2D"]
+script = ExtResource("1_root")
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Environment_glow")
+
+[node name="VignetteLayer" type="CanvasLayer" parent="."]
+layer = 1
+
+[node name="Vignette" type="ColorRect" parent="VignetteLayer"]
+material = SubResource("ShaderMaterial_vignette")
+mouse_filter = 2
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="HUD" parent="." instance=ExtResource("2_hud")]
+
+[node name="Player" parent="." instance=ExtResource("3_player")]
+position = Vector2(20, 568)
+
+[node name="Camera2D" parent="Player"]
+limit_left = -180
+limit_top = -400
+limit_right = 9700
+limit_bottom = 720
+
+[node name="KillZone" type="Area2D" parent="."]
+position = Vector2(4700, 1000)
+collision_layer = 0
+collision_mask = 2
+script = ExtResource("4_trigger")
+one_shot = false
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="KillZone"]
+shape = SubResource("Shape_KillZone")
+
+[node name="Geometry" type="Node2D" parent="."]
+
+[node name="ChamberFloor" type="StaticBody2D" parent="Geometry"]
+position = Vector2(170, 588)
+collision_layer = 1
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Geometry/ChamberFloor"]
+shape = SubResource("Shape_ChamberFloor")
+
+[node name="Visual" type="Polygon2D" parent="Geometry/ChamberFloor"]
+color = Color(0.32, 0.33, 0.4, 1)
+polygon = PackedVector2Array(-290, -20, 290, -20, 290, 20, -290, 20)
+vertex_colors = PackedColorArray(0.39, 0.4, 0.48, 1, 0.39, 0.4, 0.48, 1, 0.25, 0.26, 0.32, 1, 0.25, 0.26, 0.32, 1)
+
+[node name="ChamberLeftWall" type="StaticBody2D" parent="Geometry"]
+position = Vector2(-100, 448)
+collision_layer = 1
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Geometry/ChamberLeftWall"]
+shape = SubResource("Shape_ChamberWall")
+
+[node name="Visual" type="Polygon2D" parent="Geometry/ChamberLeftWall"]
+color = Color(0.3, 0.3, 0.38, 1)
+vertex_colors = PackedColorArray(0.36, 0.36, 0.45, 1, 0.36, 0.36, 0.45, 1, 0.24, 0.24, 0.31, 1, 0.24, 0.24, 0.31, 1)
+polygon = PackedVector2Array(-20, -120, 20, -120, 20, 120, -20, 120)
+
+[node name="ChamberCeiling" type="StaticBody2D" parent="Geometry"]
+position = Vector2(60, 308)
+collision_layer = 1
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Geometry/ChamberCeiling"]
+shape = SubResource("Shape_ChamberCeiling")
+
+[node name="Visual" type="Polygon2D" parent="Geometry/ChamberCeiling"]
+color = Color(0.3, 0.3, 0.38, 1)
+vertex_colors = PackedColorArray(0.36, 0.36, 0.45, 1, 0.36, 0.36, 0.45, 1, 0.24, 0.24, 0.31, 1, 0.24, 0.24, 0.31, 1)
+polygon = PackedVector2Array(-180, -20, 180, -20, 180, 20, -180, 20)
+
+[node name="Spire" type="Polygon2D" parent="Geometry"]
+position = Vector2(-80, 568)
+color = Color(0.35, 0.32, 0.48, 1)
+polygon = PackedVector2Array(-25, 0, 25, 0, 10, -220, -10, -220)
+
+[node name="Conduit" type="Polygon2D" parent="Geometry"]
+position = Vector2(70, 568)
+color = Color(0.72, 0.53, 1.3, 0.75)
+polygon = PackedVector2Array(-170, -3, 170, -3, 170, 3, -170, 3)
+
+[node name="ChamberLight" type="PointLight2D" parent="Geometry"]
+position = Vector2(70, 520)
+texture = SubResource("LightFalloff")
+color = Color(0.7, 0.55, 1.0, 1)
+energy = 1.2
+texture_scale = 2.2
+
+[node name="FloorPostChamber" type="StaticBody2D" parent="Geometry"]
+position = Vector2(700, 588)
+collision_layer = 1
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Geometry/FloorPostChamber"]
+shape = SubResource("Shape_FloorPostChamber")
+
+[node name="Visual" type="Polygon2D" parent="Geometry/FloorPostChamber"]
+color = Color(0.35, 0.35, 0.4, 1)
+vertex_colors = PackedColorArray(0.42, 0.42, 0.48, 1, 0.42, 0.42, 0.48, 1, 0.28, 0.28, 0.32, 1, 0.28, 0.28, 0.32, 1)
+polygon = PackedVector2Array(-240, -20, 240, -20, 240, 20, -240, 20)
+
+[node name="RaisedPlatform1" type="StaticBody2D" parent="Geometry"]
+position = Vector2(1170, 540)
+collision_layer = 1
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Geometry/RaisedPlatform1"]
+shape = SubResource("Shape_RaisedPlatform1")
+
+[node name="Visual" type="Polygon2D" parent="Geometry/RaisedPlatform1"]
+color = Color(0.5, 0.55, 0.65, 1)
+vertex_colors = PackedColorArray(0.58, 0.63, 0.74, 1, 0.58, 0.63, 0.74, 1, 0.42, 0.47, 0.56, 1, 0.42, 0.47, 0.56, 1)
+polygon = PackedVector2Array(-100, -12, 100, -12, 100, 12, -100, 12)
+
+[node name="LowerFloor" type="StaticBody2D" parent="Geometry"]
+position = Vector2(1640, 648)
+collision_layer = 1
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Geometry/LowerFloor"]
+shape = SubResource("Shape_LowerFloor")
+
+[node name="Visual" type="Polygon2D" parent="Geometry/LowerFloor"]
+color = Color(0.35, 0.35, 0.4, 1)
+vertex_colors = PackedColorArray(0.42, 0.42, 0.48, 1, 0.42, 0.42, 0.48, 1, 0.28, 0.28, 0.32, 1, 0.28, 0.28, 0.32, 1)
+polygon = PackedVector2Array(-340, -20, 340, -20, 340, 20, -340, 20)
+
+[node name="ShaftWallLeft" type="StaticBody2D" parent="Geometry"]
+position = Vector2(1850, 508)
+collision_layer = 1
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Geometry/ShaftWallLeft"]
+shape = SubResource("Shape_ShaftWall")
+
+[node name="Visual" type="Polygon2D" parent="Geometry/ShaftWallLeft"]
+color = Color(0.85, 0.55, 0.25, 1)
+vertex_colors = PackedColorArray(0.95, 0.63, 0.32, 1, 0.95, 0.63, 0.32, 1, 0.72, 0.46, 0.19, 1, 0.72, 0.46, 0.19, 1)
+polygon = PackedVector2Array(-20, -120, 20, -120, 20, 120, -20, 120)
+
+[node name="ShaftWallRight" type="StaticBody2D" parent="Geometry"]
+position = Vector2(2000, 508)
+collision_layer = 1
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Geometry/ShaftWallRight"]
+shape = SubResource("Shape_ShaftWall")
+
+[node name="Visual" type="Polygon2D" parent="Geometry/ShaftWallRight"]
+color = Color(0.85, 0.55, 0.25, 1)
+vertex_colors = PackedColorArray(0.95, 0.63, 0.32, 1, 0.95, 0.63, 0.32, 1, 0.72, 0.46, 0.19, 1, 0.72, 0.46, 0.19, 1)
+polygon = PackedVector2Array(-20, -120, 20, -120, 20, 120, -20, 120)
+
+[node name="StepA" type="StaticBody2D" parent="Geometry"]
+position = Vector2(1500, 560)
+collision_layer = 1
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Geometry/StepA"]
+shape = SubResource("Shape_Step")
+
+[node name="Visual" type="Polygon2D" parent="Geometry/StepA"]
+color = Color(0.5, 0.55, 0.65, 1)
+vertex_colors = PackedColorArray(0.58, 0.63, 0.74, 1, 0.58, 0.63, 0.74, 1, 0.42, 0.47, 0.56, 1, 0.42, 0.47, 0.56, 1)
+polygon = PackedVector2Array(-80, -12, 80, -12, 80, 12, -80, 12)
+
+[node name="StepB" type="StaticBody2D" parent="Geometry"]
+position = Vector2(1620, 480)
+collision_layer = 1
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Geometry/StepB"]
+shape = SubResource("Shape_Step")
+
+[node name="Visual" type="Polygon2D" parent="Geometry/StepB"]
+color = Color(0.5, 0.55, 0.65, 1)
+vertex_colors = PackedColorArray(0.58, 0.63, 0.74, 1, 0.58, 0.63, 0.74, 1, 0.42, 0.47, 0.56, 1, 0.42, 0.47, 0.56, 1)
+polygon = PackedVector2Array(-80, -12, 80, -12, 80, 12, -80, 12)
+
+[node name="StepC" type="StaticBody2D" parent="Geometry"]
+position = Vector2(1730, 400)
+collision_layer = 1
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Geometry/StepC"]
+shape = SubResource("Shape_Step")
+
+[node name="Visual" type="Polygon2D" parent="Geometry/StepC"]
+color = Color(0.5, 0.55, 0.65, 1)
+vertex_colors = PackedColorArray(0.58, 0.63, 0.74, 1, 0.58, 0.63, 0.74, 1, 0.42, 0.47, 0.56, 1, 0.42, 0.47, 0.56, 1)
+polygon = PackedVector2Array(-80, -12, 80, -12, 80, 12, -80, 12)
+
+[node name="ShaftLight" type="PointLight2D" parent="Geometry"]
+position = Vector2(1925, 500)
+texture = SubResource("LightFalloff")
+color = Color(1.0, 0.7, 0.35, 1)
+energy = 1.0
+texture_scale = 1.8
+
+[node name="ExitLedge" type="StaticBody2D" parent="Geometry"]
+position = Vector2(2100, 400)
+collision_layer = 1
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Geometry/ExitLedge"]
+shape = SubResource("Shape_Step")
+
+[node name="Visual" type="Polygon2D" parent="Geometry/ExitLedge"]
+color = Color(0.4, 0.85, 0.95, 1)
+vertex_colors = PackedColorArray(0.5, 0.95, 1.0, 1, 0.5, 0.95, 1.0, 1, 0.3, 0.72, 0.82, 1, 0.3, 0.72, 0.82, 1)
+polygon = PackedVector2Array(-80, -12, 80, -12, 80, 12, -80, 12)
+
+[node name="DashLandingPlatform" type="StaticBody2D" parent="Geometry"]
+position = Vector2(2485, 408)
+collision_layer = 1
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Geometry/DashLandingPlatform"]
+shape = SubResource("Shape_DashLanding")
+
+[node name="Visual" type="Polygon2D" parent="Geometry/DashLandingPlatform"]
+color = Color(0.4, 0.85, 0.95, 1)
+vertex_colors = PackedColorArray(0.5, 0.95, 1.0, 1, 0.5, 0.95, 1.0, 1, 0.3, 0.72, 0.82, 1, 0.3, 0.72, 0.82, 1)
+polygon = PackedVector2Array(-150, -20, 150, -20, 150, 20, -150, 20)
+
+[node name="CombatFloor" type="StaticBody2D" parent="Geometry"]
+position = Vector2(3335, 408)
+collision_layer = 1
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Geometry/CombatFloor"]
+shape = SubResource("Shape_CombatFloor")
+
+[node name="Visual" type="Polygon2D" parent="Geometry/CombatFloor"]
+color = Color(0.35, 0.35, 0.4, 1)
+vertex_colors = PackedColorArray(0.42, 0.42, 0.48, 1, 0.42, 0.42, 0.48, 1, 0.28, 0.28, 0.32, 1, 0.28, 0.28, 0.32, 1)
+polygon = PackedVector2Array(-700, -20, 700, -20, 700, 20, -700, 20)
+
+[node name="FirstCombatEnemy" parent="." instance=ExtResource("5_enemy")]
+position = Vector2(2900, 388)
+
+[node name="EncounterEnemyA" parent="." instance=ExtResource("5_enemy")]
+position = Vector2(3600, 388)
+
+[node name="EncounterEnemyB" parent="." instance=ExtResource("5_enemy")]
+position = Vector2(3780, 388)
+
+[node name="VeyrEncounterFloor" type="StaticBody2D" parent="Geometry"]
+position = Vector2(4520, 408)
+collision_layer = 1
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Geometry/VeyrEncounterFloor"]
+shape = SubResource("Shape_VeyrFloor")
+
+[node name="Visual" type="Polygon2D" parent="Geometry/VeyrEncounterFloor"]
+color = Color(0.35, 0.35, 0.4, 1)
+vertex_colors = PackedColorArray(0.42, 0.42, 0.48, 1, 0.42, 0.42, 0.48, 1, 0.28, 0.28, 0.32, 1, 0.28, 0.28, 0.32, 1)
+polygon = PackedVector2Array(-500, -20, 500, -20, 500, 20, -500, 20)
+
+[node name="VeyrStepPlatform" type="StaticBody2D" parent="Geometry"]
+position = Vector2(4460, 322)
+collision_layer = 1
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Geometry/VeyrStepPlatform"]
+shape = SubResource("Shape_Step")
+
+[node name="Visual" type="Polygon2D" parent="Geometry/VeyrStepPlatform"]
+color = Color(0.55, 0.4, 1.0, 0.85)
+vertex_colors = PackedColorArray(0.65, 0.5, 1.1, 1, 0.65, 0.5, 1.1, 1, 0.45, 0.32, 0.85, 1, 0.45, 0.32, 0.85, 1)
+polygon = PackedVector2Array(-80, -12, 80, -12, 80, 12, -80, 12)
+
+[node name="FlankEnemyLeft" parent="." instance=ExtResource("5_enemy")]
+position = Vector2(4350, 388)
+
+[node name="FlankEnemyRight" parent="." instance=ExtResource("5_enemy")]
+position = Vector2(4550, 388)
+
+[node name="VeyrEncounterRangedFlanker" parent="." instance=ExtResource("6_ranged_enemy")]
+position = Vector2(4650, 388)
+
+[node name="PerfectStepEnemy" parent="." instance=ExtResource("5_enemy")]
+position = Vector2(4850, 388)
+
+[node name="HealthComponent" parent="PerfectStepEnemy"]
+max_health = 90.0
+
+[node name="Backdrop" type="Node2D" parent="Geometry"]
+z_index = -1
+
+[node name="SpireA" type="Polygon2D" parent="Geometry/Backdrop"]
+position = Vector2(5150, 388)
+color = Color(0.42, 0.5, 0.65, 0.9)
+polygon = PackedVector2Array(-60, 0, 60, 0, 35, -520, -35, -520)
+
+[node name="SpireB" type="Polygon2D" parent="Geometry/Backdrop"]
+position = Vector2(5450, 388)
+color = Color(0.36, 0.44, 0.58, 0.85)
+polygon = PackedVector2Array(-45, 0, 45, 0, 25, -380, -25, -380)
+
+[node name="SpireC" type="Polygon2D" parent="Geometry/Backdrop"]
+position = Vector2(5750, 388)
+color = Color(0.42, 0.38, 0.58, 0.9)
+polygon = PackedVector2Array(-70, 0, 70, 0, 45, -520, 20, -650, -20, -650, -45, -520)
+
+[node name="SpireD" type="Polygon2D" parent="Geometry/Backdrop"]
+position = Vector2(6000, 388)
+color = Color(0.4, 0.48, 0.62, 0.8)
+polygon = PackedVector2Array(-50, 0, 50, 0, 28, -300, -28, -300)
+
+[node name="MegastructureLeft" type="Polygon2D" parent="Geometry/Backdrop"]
+z_index = -3
+position = Vector2(5780, 388)
+color = Color(0.62, 0.65, 0.74, 0.3)
+polygon = PackedVector2Array(-60, 0, 60, 0, 30, -950, -10, -950)
+
+[node name="MegastructureRight" type="Polygon2D" parent="Geometry/Backdrop"]
+z_index = -3
+position = Vector2(5980, 388)
+color = Color(0.62, 0.65, 0.74, 0.3)
+polygon = PackedVector2Array(-60, 0, 60, 0, 30, -900, -10, -900)
+
+[node name="FarSpireA" type="Polygon2D" parent="Geometry/Backdrop"]
+z_index = -2
+position = Vector2(5050, 388)
+color = Color(0.5, 0.55, 0.68, 0.4)
+polygon = PackedVector2Array(-35, 0, 35, 0, 18, -180, -18, -180)
+
+[node name="FarSpireB" type="Polygon2D" parent="Geometry/Backdrop"]
+z_index = -2
+position = Vector2(5620, 388)
+color = Color(0.5, 0.55, 0.68, 0.4)
+polygon = PackedVector2Array(-40, 0, 40, 0, 22, -220, -22, -220)
+
+[node name="FarSpireC" type="Polygon2D" parent="Geometry/Backdrop"]
+z_index = -2
+position = Vector2(6180, 388)
+color = Color(0.5, 0.55, 0.68, 0.4)
+polygon = PackedVector2Array(-35, 0, 35, 0, 18, -190, -18, -190)
+
+[node name="NearRuinLeft" type="Polygon2D" parent="Geometry/Backdrop"]
+position = Vector2(5210, 388)
+color = Color(0.24, 0.26, 0.34, 1)
+polygon = PackedVector2Array(-70, 0, 70, 0, 60, -200, 25, -180, 40, -400, -15, -350, -70, -280)
+
+[node name="NearRuinRight" type="Polygon2D" parent="Geometry/Backdrop"]
+position = Vector2(5540, 388)
+color = Color(0.22, 0.25, 0.33, 1)
+polygon = PackedVector2Array(-60, 0, 90, 0, 75, -150, 40, -130, 55, -320, 10, -280, -40, -400, -60, -220)
+
+[node name="DormantConduitA" type="Polygon2D" parent="Geometry/Backdrop"]
+position = Vector2(5300, 220)
+color = Color(0.42, 0.42, 0.48, 0.5)
+polygon = PackedVector2Array(-160, -6, 160, -6, 160, 6, -160, 6)
+
+[node name="DormantConduitB" type="Polygon2D" parent="Geometry/Backdrop"]
+position = Vector2(5850, 100)
+color = Color(0.42, 0.42, 0.48, 0.5)
+polygon = PackedVector2Array(-140, -5, 140, -5, 140, 5, -140, 5)
+
+[node name="VeyrRemnant" type="Polygon2D" parent="Geometry/Backdrop"]
+color = Color(0.9, 0.7, 1.4, 0.85)
+position = Vector2(5750, -160)
+polygon = PackedVector2Array(-40, -4, 40, -4, 40, 4, -40, 4)
+
+[node name="LowerRuinA" type="Polygon2D" parent="Geometry/Backdrop"]
+position = Vector2(5320, 460)
+color = Color(0.2, 0.22, 0.28, 0.7)
+polygon = PackedVector2Array(-140, 60, 140, 60, 110, -40, 60, -20, 20, -140, -60, -80, -140, -10)
+
+[node name="LowerRuinB" type="Polygon2D" parent="Geometry/Backdrop"]
+position = Vector2(5680, 560)
+color = Color(0.19, 0.21, 0.27, 0.65)
+polygon = PackedVector2Array(-160, 68, 160, 68, 130, -30, 50, 10, 0, -110, -80, -40, -160, 20)
+
+[node name="LowerRuinC" type="Polygon2D" parent="Geometry/Backdrop"]
+position = Vector2(6050, 628)
+color = Color(0.18, 0.2, 0.26, 0.6)
+polygon = PackedVector2Array(-200, 80, 200, 80, 160, -60, 70, -20, -20, -160, -110, -50, -200, 30)
+
+[node name="RevealTrigger" type="Area2D" parent="."]
+position = Vector2(5040, 318)
+collision_layer = 0
+collision_mask = 2
+script = ExtResource("4_trigger")
+one_shot = true
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="RevealTrigger"]
+shape = SubResource("Shape_MemoryTrigger")
+
+[node name="AvarisReveal" type="Node" parent="."]
+script = ExtResource("12_reveal")
+trigger_path = NodePath("../RevealTrigger")
+camera_path = NodePath("../Player/Camera2D")
+
+[node name="RevealLedge" type="StaticBody2D" parent="Geometry"]
+position = Vector2(5120, 408)
+collision_layer = 1
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Geometry/RevealLedge"]
+shape = SubResource("Shape_RevealLedge")
+
+[node name="Visual" type="Polygon2D" parent="Geometry/RevealLedge"]
+color = Color(0.35, 0.35, 0.4, 1)
+vertex_colors = PackedColorArray(0.42, 0.42, 0.48, 1, 0.42, 0.42, 0.48, 1, 0.28, 0.28, 0.32, 1, 0.28, 0.28, 0.32, 1)
+polygon = PackedVector2Array(-100, -20, 100, -20, 100, 20, -100, 20)
+
+[node name="OverlookPlatform" type="StaticBody2D" parent="Geometry"]
+position = Vector2(5380, 340)
+collision_layer = 1
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Geometry/OverlookPlatform"]
+shape = SubResource("Shape_Overlook")
+
+[node name="Visual" type="Polygon2D" parent="Geometry/OverlookPlatform"]
+color = Color(0.55, 0.4, 1.0, 0.6)
+polygon = PackedVector2Array(-110, -16, 110, -16, 110, 16, -110, 16)
+
+[node name="ExplorationStep1" type="StaticBody2D" parent="Geometry"]
+position = Vector2(5300, 476)
+collision_layer = 1
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Geometry/ExplorationStep1"]
+shape = SubResource("Shape_DescendStep")
+
+[node name="Visual" type="Polygon2D" parent="Geometry/ExplorationStep1"]
+color = Color(0.5, 0.55, 0.65, 1)
+vertex_colors = PackedColorArray(0.58, 0.63, 0.74, 1, 0.58, 0.63, 0.74, 1, 0.42, 0.47, 0.56, 1, 0.42, 0.47, 0.56, 1)
+polygon = PackedVector2Array(-100, -16, 100, -16, 100, 16, -100, 16)
+
+[node name="ExplorationStep2" type="StaticBody2D" parent="Geometry"]
+position = Vector2(5550, 548)
+collision_layer = 1
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Geometry/ExplorationStep2"]
+shape = SubResource("Shape_DescendStep")
+
+[node name="Visual" type="Polygon2D" parent="Geometry/ExplorationStep2"]
+color = Color(0.5, 0.55, 0.65, 1)
+vertex_colors = PackedColorArray(0.58, 0.63, 0.74, 1, 0.58, 0.63, 0.74, 1, 0.42, 0.47, 0.56, 1, 0.42, 0.47, 0.56, 1)
+polygon = PackedVector2Array(-100, -16, 100, -16, 100, 16, -100, 16)
+
+[node name="ExplorationFloor" type="StaticBody2D" parent="Geometry"]
+position = Vector2(5950, 628)
+collision_layer = 1
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Geometry/ExplorationFloor"]
+shape = SubResource("Shape_ExplorationFloor")
+
+[node name="Visual" type="Polygon2D" parent="Geometry/ExplorationFloor"]
+color = Color(0.35, 0.35, 0.4, 1)
+vertex_colors = PackedColorArray(0.42, 0.42, 0.48, 1, 0.42, 0.42, 0.48, 1, 0.28, 0.28, 0.32, 1, 0.28, 0.28, 0.32, 1)
+polygon = PackedVector2Array(-300, -20, 300, -20, 300, 20, -300, 20)
+
+[node name="RangedFloor" type="StaticBody2D" parent="Geometry"]
+position = Vector2(6650, 628)
+collision_layer = 1
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Geometry/RangedFloor"]
+shape = SubResource("Shape_RangedFloor")
+
+[node name="Visual" type="Polygon2D" parent="Geometry/RangedFloor"]
+color = Color(0.35, 0.35, 0.4, 1)
+vertex_colors = PackedColorArray(0.42, 0.42, 0.48, 1, 0.42, 0.42, 0.48, 1, 0.28, 0.28, 0.32, 1, 0.28, 0.28, 0.32, 1)
+polygon = PackedVector2Array(-400, -20, 400, -20, 400, 20, -400, 20)
+
+[node name="CoverBlock" type="StaticBody2D" parent="Geometry"]
+position = Vector2(6450, 573)
+collision_layer = 1
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Geometry/CoverBlock"]
+shape = SubResource("Shape_CoverBlock")
+
+[node name="Visual" type="Polygon2D" parent="Geometry/CoverBlock"]
+color = Color(0.26, 0.24, 0.3, 1)
+vertex_colors = PackedColorArray(0.34, 0.32, 0.4, 1, 0.34, 0.32, 0.4, 1, 0.2, 0.18, 0.24, 1, 0.2, 0.18, 0.24, 1)
+polygon = PackedVector2Array(-25, -35, 25, -35, 25, 35, -25, 35)
+
+[node name="SentryPerch" type="StaticBody2D" parent="Geometry"]
+position = Vector2(6520, 580)
+collision_layer = 1
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Geometry/SentryPerch"]
+shape = SubResource("Shape_Step")
+
+[node name="Visual" type="Polygon2D" parent="Geometry/SentryPerch"]
+color = Color(0.5, 0.55, 0.65, 1)
+vertex_colors = PackedColorArray(0.58, 0.63, 0.74, 1, 0.58, 0.63, 0.74, 1, 0.42, 0.47, 0.56, 1, 0.42, 0.47, 0.56, 1)
+polygon = PackedVector2Array(-80, -12, 80, -12, 80, 12, -80, 12)
+
+[node name="RangedSentry" parent="." instance=ExtResource("6_ranged_enemy")]
+position = Vector2(6600, 608)
+
+[node name="ArenaOmen" type="Polygon2D" parent="Geometry"]
+z_index = -1
+position = Vector2(7050, 608)
+color = Color(0.18, 0.15, 0.22, 0.9)
+polygon = PackedVector2Array(-90, 0, 90, 0, 55, -350, 20, -300, 45, -560, -30, -450, -90, -320)
+
+[node name="BossArenaFloor" type="StaticBody2D" parent="Geometry"]
+position = Vector2(7650, 628)
+collision_layer = 1
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Geometry/BossArenaFloor"]
+shape = SubResource("Shape_BossArenaFloor")
+
+[node name="Visual" type="Polygon2D" parent="Geometry/BossArenaFloor"]
+color = Color(0.35, 0.35, 0.4, 1)
+vertex_colors = PackedColorArray(0.42, 0.42, 0.48, 1, 0.42, 0.42, 0.48, 1, 0.28, 0.28, 0.32, 1, 0.28, 0.28, 0.32, 1)
+polygon = PackedVector2Array(-600, -20, 600, -20, 600, 20, -600, 20)
+
+[node name="RuinPillarA" type="Polygon2D" parent="Geometry"]
+z_index = -1
+position = Vector2(7280, 608)
+color = Color(0.28, 0.26, 0.32, 0.85)
+polygon = PackedVector2Array(-55, 0, 55, 0, 40, -300, 15, -260, 30, -450, -20, -380, -55, -260)
+
+[node name="RuinPillarB" type="Polygon2D" parent="Geometry"]
+z_index = -1
+position = Vector2(8080, 608)
+color = Color(0.26, 0.24, 0.3, 0.85)
+polygon = PackedVector2Array(-60, 0, 60, 0, 45, -260, 20, -220, 35, -500, -25, -400, -60, -220)
+
+[node name="ArenaSidePlatform" type="StaticBody2D" parent="Geometry"]
+position = Vector2(7350, 580)
+collision_layer = 1
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Geometry/ArenaSidePlatform"]
+shape = SubResource("Shape_Step")
+
+[node name="Visual" type="Polygon2D" parent="Geometry/ArenaSidePlatform"]
+color = Color(0.5, 0.55, 0.65, 1)
+vertex_colors = PackedColorArray(0.58, 0.63, 0.74, 1, 0.58, 0.63, 0.74, 1, 0.42, 0.47, 0.56, 1, 0.42, 0.47, 0.56, 1)
+polygon = PackedVector2Array(-80, -12, 80, -12, 80, 12, -80, 12)
+
+[node name="MiniBoss" parent="." instance=ExtResource("7_miniboss")]
+position = Vector2(7900, 608)
+
+[node name="AI" parent="MiniBoss"]
+melee_damage = 10.0
+ranged_damage = 7.0
+
+[node name="MemoryFloor" type="StaticBody2D" parent="Geometry"]
+position = Vector2(8600, 628)
+collision_layer = 1
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Geometry/MemoryFloor"]
+shape = SubResource("Shape_MemoryFloor")
+
+[node name="Visual" type="Polygon2D" parent="Geometry/MemoryFloor"]
+color = Color(0.35, 0.35, 0.4, 1)
+vertex_colors = PackedColorArray(0.42, 0.42, 0.48, 1, 0.42, 0.42, 0.48, 1, 0.28, 0.28, 0.32, 1, 0.28, 0.28, 0.32, 1)
+polygon = PackedVector2Array(-350, -20, 350, -20, 350, 20, -350, 20)
+
+[node name="MemoryTrigger" type="Area2D" parent="."]
+position = Vector2(8500, 538)
+collision_layer = 0
+collision_mask = 2
+script = ExtResource("4_trigger")
+one_shot = true
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="MemoryTrigger"]
+shape = SubResource("Shape_MemoryTrigger")
+
+[node name="MemorySequence" type="Node" parent="."]
+script = ExtResource("8_memory")
+trigger_path = NodePath("../MemoryTrigger")
+present_tint = Color(0.5, 0.5, 0.62, 1)
+past_tint = Color(0.85, 0.75, 1.0, 1)
+activation_paths = [NodePath("../Geometry/RuinPillarA"), NodePath("../Geometry/RuinPillarB")]
+drift_paths = [NodePath("MemoryOnly/DriftFormA"), NodePath("MemoryOnly/DriftFormB"), NodePath("MemoryOnly/DriftFormC")]
+
+[node name="CanvasModulate" type="CanvasModulate" parent="MemorySequence"]
+color = Color(0.5, 0.5, 0.62, 1)
+
+[node name="MemoryOnly" type="Node2D" parent="MemorySequence"]
+visible = false
+
+[node name="BridgeAC" type="Polygon2D" parent="MemorySequence/MemoryOnly"]
+color = Color(1.1, 1.04, 1.3, 0.85)
+polygon = PackedVector2Array(5150, -305, 5750, -305, 5750, -295, 5150, -295)
+
+[node name="BridgeCD" type="Polygon2D" parent="MemorySequence/MemoryOnly"]
+color = Color(1.1, 1.04, 1.3, 0.85)
+polygon = PackedVector2Array(5750, -155, 6000, -155, 6000, -145, 5750, -145)
+
+[node name="WindowA" type="Polygon2D" parent="MemorySequence/MemoryOnly"]
+color = Color(1.17, 1.1, 1.3, 0.95)
+polygon = PackedVector2Array(5726, -584, 5734, -584, 5734, -576, 5726, -576)
+
+[node name="WindowB" type="Polygon2D" parent="MemorySequence/MemoryOnly"]
+color = Color(1.17, 1.1, 1.3, 0.95)
+polygon = PackedVector2Array(5746, -604, 5754, -604, 5754, -596, 5746, -596)
+
+[node name="WindowC" type="Polygon2D" parent="MemorySequence/MemoryOnly"]
+color = Color(1.17, 1.1, 1.3, 0.95)
+polygon = PackedVector2Array(5766, -584, 5774, -584, 5774, -576, 5766, -576)
+
+[node name="WindowLight" type="PointLight2D" parent="MemorySequence/MemoryOnly"]
+position = Vector2(5750, -590)
+texture = SubResource("LightFalloff")
+color = Color(0.85, 0.8, 1.0, 1)
+energy = 1.5
+texture_scale = 1.6
+
+[node name="LivingConduit" type="Polygon2D" parent="MemorySequence/MemoryOnly"]
+color = Color(1.2, 0.95, 1.6, 0.85)
+polygon = PackedVector2Array(8050, 245, 8550, 245, 8550, 255, 8050, 255)
+
+[node name="ConduitLight" type="PointLight2D" parent="MemorySequence/MemoryOnly"]
+position = Vector2(8300, 250)
+texture = SubResource("LightFalloff")
+color = Color(0.8, 0.65, 1.2, 1)
+energy = 1.1
+texture_scale = 1.8
+
+[node name="DistantFigureA" type="Polygon2D" parent="MemorySequence/MemoryOnly"]
+position = Vector2(8060, 145)
+color = Color(0.1, 0.09, 0.14, 1)
+polygon = PackedVector2Array(-7, -34, 7, -34, 9, -24, 6, 0, -6, 0, -9, -24)
+
+[node name="DistantFigureB" type="Polygon2D" parent="MemorySequence/MemoryOnly"]
+position = Vector2(8082, 145)
+color = Color(0.1, 0.09, 0.14, 1)
+polygon = PackedVector2Array(-7, -38, 7, -38, 9, -27, 6, 0, -6, 0, -9, -27)
+
+[node name="DistantFigureC" type="Polygon2D" parent="MemorySequence/MemoryOnly"]
+position = Vector2(8102, 145)
+color = Color(0.1, 0.09, 0.14, 1)
+polygon = PackedVector2Array(-6, -32, 6, -32, 8, -22, 5, 0, -5, 0, -8, -22)
+
+[node name="DriftFormA" type="Polygon2D" parent="MemorySequence/MemoryOnly"]
+position = Vector2(8180, 180)
+color = Color(0.95, 0.85, 1.3, 0.8)
+polygon = PackedVector2Array(-8, 0, 0, -5, 8, 0, 0, 5)
+
+[node name="DriftFormB" type="Polygon2D" parent="MemorySequence/MemoryOnly"]
+position = Vector2(8380, 100)
+color = Color(0.95, 0.85, 1.3, 0.75)
+polygon = PackedVector2Array(-6, 0, 0, -4, 6, 0, 0, 4)
+
+[node name="DriftFormC" type="Polygon2D" parent="MemorySequence/MemoryOnly"]
+position = Vector2(8480, 320)
+color = Color(0.95, 0.85, 1.3, 0.7)
+polygon = PackedVector2Array(-7, 0, 0, -4, 7, 0, 0, 4)
+
+[node name="EndFloor" type="StaticBody2D" parent="Geometry"]
+position = Vector2(9200, 628)
+collision_layer = 1
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Geometry/EndFloor"]
+shape = SubResource("Shape_EndFloor")
+
+[node name="Visual" type="Polygon2D" parent="Geometry/EndFloor"]
+color = Color(0.35, 0.35, 0.4, 1)
+vertex_colors = PackedColorArray(0.42, 0.42, 0.48, 1, 0.42, 0.42, 0.48, 1, 0.28, 0.28, 0.32, 1, 0.28, 0.28, 0.32, 1)
+polygon = PackedVector2Array(-250, -20, 250, -20, 250, 20, -250, 20)
+
+[node name="EndSpire" type="Polygon2D" parent="Geometry"]
+position = Vector2(9500, 608)
+color = Color(0.32, 0.28, 0.42, 0.9)
+polygon = PackedVector2Array(-40, 0, 40, 0, 22, -450, -22, -450)
+
+[node name="EndWall" type="StaticBody2D" parent="Geometry"]
+position = Vector2(9470, 488)
+collision_layer = 1
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Geometry/EndWall"]
+shape = SubResource("Shape_EndWall")
+
+[node name="Visual" type="Polygon2D" parent="Geometry/EndWall"]
+color = Color(0.3, 0.3, 0.38, 1)
+vertex_colors = PackedColorArray(0.36, 0.36, 0.45, 1, 0.36, 0.36, 0.45, 1, 0.24, 0.24, 0.31, 1, 0.24, 0.24, 0.31, 1)
+polygon = PackedVector2Array(-20, -120, 20, -120, 20, 120, -20, 120)
+
+[node name="ClosingSpire" type="Polygon2D" parent="Geometry"]
+position = Vector2(9450, 608)
+color = Color(0.35, 0.32, 0.48, 1)
+polygon = PackedVector2Array(-25, 0, 25, 0, 10, -220, -10, -220)
+
+[node name="ClosingConduit" type="Polygon2D" parent="Geometry"]
+position = Vector2(9200, 608)
+color = Color(0.72, 0.53, 1.3, 0.75)
+polygon = PackedVector2Array(-170, -3, 170, -3, 170, 3, -170, 3)
+
+[node name="RhaekTrigger" type="Area2D" parent="."]
+position = Vector2(9050, 538)
+collision_layer = 0
+collision_mask = 2
+script = ExtResource("4_trigger")
+one_shot = true
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="RhaekTrigger"]
+shape = SubResource("Shape_MemoryTrigger")
+
+[node name="RhaekTeaser" type="Node" parent="."]
+script = ExtResource("9_rhaek")
+trigger_path = NodePath("../RhaekTrigger")
+wait_for_path = NodePath("../MemorySequence")
+camera_path = NodePath("../Player/Camera2D")
+end_fade_path = NodePath("../EndLayer/EndFade")
+end_label_path = NodePath("../EndLayer/EndLabel")
+
+[node name="Silhouette" type="Polygon2D" parent="RhaekTeaser"]
+position = Vector2(9500, -62)
+color = Color(0.12, 0.1, 0.18, 1)
+polygon = PackedVector2Array(-16, -74, 16, -74, 22, -52, 15, 0, -15, 0, -22, -52)
+
+[node name="DepartBurst" type="Polygon2D" parent="RhaekTeaser"]
+color = Color(0.72, 0.53, 1.3, 1)
+polygon = PackedVector2Array(14, 0, 4, 4, 0, 14, -4, 4, -14, 0, -4, -4, 0, -14, 4, -4)
+
+[node name="Light" type="PointLight2D" parent="RhaekTeaser"]
+position = Vector2(9500, -62)
+texture = SubResource("LightFalloff")
+color = Color(0.72, 0.53, 1.3, 1)
+energy = 0.8
+texture_scale = 1.4
+visible = false
+
+[node name="DepartParticles" type="GPUParticles2D" parent="RhaekTeaser"]
+position = Vector2(9500, -62)
+emitting = false
+amount = 20
+lifetime = 0.6
+one_shot = true
+explosiveness = 1.0
+process_material = SubResource("ParticleProcessMaterial_rhaek")
+texture = ExtResource("10_particle_dot")
+
+[node name="EndLayer" type="CanvasLayer" parent="."]
+layer = 3
+
+[node name="EndFade" type="ColorRect" parent="EndLayer"]
+modulate = Color(1, 1, 1, 0)
+mouse_filter = 2
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0, 0, 0, 1)
+
+[node name="EndLabel" type="Label" parent="EndLayer"]
+visible = false
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -220.0
+offset_top = -20.0
+offset_right = 220.0
+offset_bottom = 20.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_font_sizes/font_size = 28
+theme_override_colors/font_color = Color(0.9, 0.9, 0.95, 1)
+horizontal_alignment = 1
+vertical_alignment = 1
+text = "Vertical Slice Complete"
+
+[node name="ChamberDust" type="GPUParticles2D" parent="Geometry"]
+position = Vector2(60, 460)
+amount = 14
+lifetime = 6.0
+preprocess = 6.0
+process_material = SubResource("ParticleProcessMaterial_chamberdust")
+texture = ExtResource("10_particle_dot")
+
+[node name="VistaMotes" type="GPUParticles2D" parent="Geometry"]
+position = Vector2(5600, -200)
+amount = 22
+lifetime = 9.0
+preprocess = 9.0
+process_material = SubResource("ParticleProcessMaterial_vistamotes")
+texture = ExtResource("10_particle_dot")

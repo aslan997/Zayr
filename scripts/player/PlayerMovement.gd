@@ -46,11 +46,19 @@ var air_dash_available: bool = true
 ## 1.0 = facing right, -1.0 = facing left. Public so other components
 ## (PlayerCombat, future animation) can read Zayr's current facing.
 var facing: float = 1.0
+## Wall normal's X while touching a wall (+1 = wall to Zayr's left,
+## -1 = wall to Zayr's right - opposite sign from `facing`, which
+## tracks last movement input and does NOT reliably indicate which
+## side is walled during a slide: wall-sliding triggers on contact
+## alone (see is_wall_sliding below), with no input-direction check,
+## so facing can be stale or point away from the wall. Public - read
+## by animation code that needs to know which side is actually
+## contacted, not just which way Zayr last pressed.
+var wall_normal_x: float = 0.0
 
 var _coyote_timer: float = 0.0
 var _jump_buffer_timer: float = 0.0
 var _wall_jump_lock_timer: float = 0.0
-var _wall_normal_x: float = 0.0
 var _dash_timer: float = 0.0
 var _dash_cooldown_timer: float = 0.0
 var _dash_direction: float = 1.0
@@ -85,7 +93,7 @@ func physics_update(delta: float, move_input: float, jump_just_pressed: bool, da
 	is_wall_sliding = false
 
 	if on_wall:
-		_wall_normal_x = body.get_wall_normal().x
+		wall_normal_x = body.get_wall_normal().x
 
 	# Wall jump takes priority over a normal jump while airborne against a wall.
 	if on_wall and _jump_buffer_timer > 0.0:
@@ -158,7 +166,7 @@ func _do_jump() -> void:
 
 func _do_wall_jump() -> void:
 	body.velocity.y = wall_jump_velocity_y
-	body.velocity.x = _wall_normal_x * wall_jump_horizontal_speed
+	body.velocity.x = wall_normal_x * wall_jump_horizontal_speed
 	_jump_buffer_timer = 0.0
 	_coyote_timer = 0.0
 	_wall_jump_lock_timer = wall_jump_input_lock_time

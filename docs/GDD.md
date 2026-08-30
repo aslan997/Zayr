@@ -104,3 +104,37 @@ not yet defined.
 See [PROGRESS.md](PROGRESS.md) for what is actually implemented right now.
 This GDD describes the eventual full-game vision; implementation proceeds
 incrementally through validated milestones.
+
+A playable vertical slice exists (`AvarisVerticalSlice.tscn`), covering the
+Awakening chamber through a Rhaek teaser and end marker, and is the
+project's current main scene. It teaches the core moveset through
+encounter composition rather than tutorial UI - e.g. its Veyr Step
+section (Stage 3) is built so the encounter itself makes instantaneous
+repositioning through danger the obviously better option, without ever
+requiring it to progress. Its non-combat reveal/exploration section
+(Stage 4) is the first graybox attempt at §2's "enormous, geometric,
+vertically integrated, alien but beautiful" Jinn architecture pillar -
+layered background silhouettes, a dormant-Veyr-infrastructure motif, and
+a single unnamed distant landmark implying the playable route is a tiny
+fragment of a much larger fallen city. Its ranged-then-mini-boss section
+(Stage 5) is where danger returns after that quiet stretch, and is the
+first place the full player kit - melee, Heavy/Aerial/Charged, Ranged
+Veyr, Veyr Step, Perfect Step, stagger, and Veyr regeneration together -
+gets exercised against a single sustained threat rather than individual
+encounters. Its post-boss beat (Stage 6) is the slice's first emotional/
+narrative moment: a brief, fragmented PRESENT -> PAST -> PRESENT memory
+that lets the same ruined skyline the player has been walking through
+visibly become its inhabited former self for a few seconds - ordered,
+lit, active - before slipping back into ruin. No dialogue, no lore
+text, no named characters shown; only mood and environmental
+transformation, per §2's "alien but beautiful" pillar and the still-
+uncharacterized status of Zayr's era. The slice closes (Stage 7) with a
+brief, wordless teaser: after a quiet interval, Zayr sees a distant,
+unreachable figure - implicitly Rhaek, per §8's reserved canon roster,
+though the slice never names or confirms this - who notices him, holds
+still for a moment, then vanishes. No dialogue, no explanation, no
+combat; the question it leaves ("who was that, and why does it feel
+personal") is deliberately unanswered here. This is the final beat of
+the vertical slice as currently scoped - see [PROGRESS.md](PROGRESS.md)
+and [COMBAT.md](COMBAT.md) for the full stage-by-stage breakdown; this
+GDD does not track it stage-by-stage.

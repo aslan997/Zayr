@@ -39,11 +39,14 @@ manifested around his body, not technically a sword.
   than [ARCHITECTURE.md](ARCHITECTURE.md)'s player-movement section.
 - Heavy attack — **implemented** (§8): a single, slower, more deliberate
   swing, not part of the 3-hit combo.
-- Charged attack — not yet implemented
-- Aerial attacks — not yet implemented
-- Veyr ranged attack — not yet implemented for the player (the enemy has
-  one via the reusable `Projectile` primitive it was built to eventually
-  serve — see [ARCHITECTURE.md](ARCHITECTURE.md) §4)
+- Charged attack — **implemented** (§15): hold to charge, release to
+  strike with damage/stability linearly scaled by charge duration
+- Aerial attacks — **implemented** (§14): a downward-angled variant of
+  the combo/heavy/charged attack, usable while airborne
+- Veyr ranged attack — **implemented** (§13): fires the same
+  `Projectile` primitive the enemy ranged attack already used, per the
+  reuse it was originally built for (see [ARCHITECTURE.md](ARCHITECTURE.md)
+  §4)
 - Perfect Step — **implemented** (§7.1): rewards precisely timing a Veyr
   Step through an actual incoming enemy attack.
 
@@ -519,3 +522,630 @@ per-scene/per-attack overrides):
 
 `collision_mask` is a structural setting, not a balance value — listed
 above for completeness, not something to "retune."
+
+## 13. Ranged Veyr Attack
+
+User asked to add "aerial attacks, ranged Veyr, or charged attacks" and,
+when asked which to prioritize, picked the ranged Veyr attack. No
+mechanical brief was given (same situation Heavy Attack and Perfect Step
+were in before), so the design below was proposed and approved before
+implementation, following the project's established process for
+unspecified named abilities.
+
+**Implemented in a new component, `scripts/player/PlayerRangedAttack.gd`
+— unlike Heavy Attack, not folded into `PlayerCombat.gd`**, because it
+doesn't share `PlayerCombat`'s `Hitbox`: it fires a moving `Projectile`,
+the same primitive `RangedEnemyAI`/`BossAI` already use, reused as-is
+rather than duplicated.
+
+- Brief windup (`windup`, 0.15s default) — just enough to read as a
+  beat, not a real telegraph — then fires. **Horizontal only**, matching
+  every existing use of `Projectile`. Full 8-directional aim (reusing
+  Veyr Step's `aim_up`/`aim_down` system) was considered and explicitly
+  deferred: it would mean changing `Projectile.direction` from a `float`
+  to a `Vector2`, which is shared with every enemy that fires one — not
+  worth that risk for this pass. Could be added later as its own
+  increment.
+- **Costs Veyr** (`veyr_cost`, 15 default) — the first ability that
+  actually spends `VeyrComponent`'s pool in normal play (Heavy Attack's
+  equivalent flag defaults to `false`; Perfect Step only ever *adds*
+  Veyr). Spent only at the moment of firing (`_fire()`), not at windup
+  start, specifically so an interrupted windup (Veyr Step cancelling it
+  mid-flight) doesn't waste the cost. With no Veyr regeneration
+  designed yet (§4), this makes the ability a genuinely scarce resource
+  until Perfect Step refunds it — an intentional consequence of the
+  design, not an oversight.
+- Mutually exclusive with the combo/heavy attack **in both directions**,
+  via a symmetric cross-component check rather than shared state (see
+  [ARCHITECTURE.md](ARCHITECTURE.md) §3): `PlayerRangedAttack` won't
+  start while `PlayerCombat.is_attacking`/`is_heavy_attacking`, and
+  `PlayerCombat` won't start either of its own attacks while
+  `PlayerRangedAttack.is_attacking`.
+- Cancellable by Veyr Step mid-windup via `cancel_attack()`, same pattern
+  as the combo/heavy attack and the HURT state — confirmed via test that
+  cancelling mid-windup does not spend Veyr (it hadn't been charged yet).
+- The fired `Projectile`'s visual is recolored to the established
+  Veyr-violet (`Color(0.55, 0.4, 1.0)`) at runtime so it reads as Zayr's
+  own ability, not a copy of an enemy's orange-red shot.
+- Input: **Q** — deliberately not a mouse button. The user explicitly
+  asked not to use middle mouse ("can have issues"); Q sits right next
+  to WASD, reachable without moving the movement hand, same reasoning
+  already applied to `veyr_step`'s move to Ctrl.
+
+**Placeholder values** (`PlayerRangedAttack.gd`, all `@export`-tunable,
+none from a design brief):
+
+| Value | Default |
+|---|---|
+| `windup` | 0.15s |
+| `cooldown` | 0.6s |
+| `damage` | 14 |
+| `stability_damage` | 6 |
+| `projectile_speed` | 320 |
+| `muzzle_offset` | (26, -23) |
+| `veyr_cost` | 15 |
+
+### Validation performed by the assistant
+
+Wrote a throwaway real-engine-loop test (not committed, deleted after)
+against the actual `TestArena.tscn` and its training dummy: confirmed
+Veyr is untouched during the windup and only drops by exactly 15 the
+instant it fires; confirmed the shot lands on the dummy for exactly the
+configured 14 damage; confirmed pressing the melee attack mid-ranged-
+windup — and pressing ranged attack mid-melee-swing — both correctly
+refuse (mutual exclusion holds in both directions); confirmed Veyr Step
+cancels an in-progress windup and Veyr stays at its pre-windup value
+(not further reduced); confirmed the attack correctly refuses to even
+start when Veyr is below `veyr_cost`. `godot --headless --path . --import`
+and `--quit-after` boot checks were clean on both `TestArena.tscn` and
+the vertical slice (which shares `Player.tscn`).
+
+**Not yet verified (needs manual play):** whether the windup timing and
+15-Veyr cost feel right in an actual fight, and whether burning through
+the Veyr pool this fast (with no regeneration yet) feels like a fair
+resource or a frustrating dead end — this is exactly the kind of
+balance question that needs a human playing it, not headless proof.
+
+## 14. Aerial Attacks
+
+User's next pick from the same three-option ask (§13). Before proposing
+a design, inspected whether attacking while airborne already did
+anything, since no code in `PlayerCombat.gd` gates attacks to grounded-
+only. Confirmed via a real-engine-loop test that it technically already
+works (jump, swing, `Hitbox` activates mid-air) but is barely useful:
+the `Hitbox` is horizontal-only at Zayr's own current height, so a
+swing while elevated above a ground-level enemy simply misses
+vertically even at correct horizontal range — reproduced exactly
+(hitbox at y≈501 while the target's hurtbox spans y≈543-593). Reported
+this finding before proposing a fix, then implemented an approved
+first version.
+
+### Revision: from a positional variant to a genuinely distinct move
+
+The first version (documented in earlier revisions of this section, now
+superseded) made Aerial Attack a *positional variant* of the combo/heavy
+attack — same `Hitbox`, same damage/timing values, just repositioned and
+rotated when `aim_down` was held while airborne. A follow-up requirements
+pass explicitly asked for the Aerial Attack to **"have its own hitbox/
+timing"** and **"feel meaningfully different from simply performing the
+ground attack in the air"** — the original version didn't clear that
+bar, since it was literally the ground attack's own values, repositioned.
+Reworked accordingly:
+
+- **The tap-based `attack` button, while airborne, now triggers a
+  dedicated Aerial Attack instead of the grounded 3-hit combo** —
+  `combo_index`/`is_attacking` are never touched while airborne, so it
+  doesn't chain into or interrupt combo state. Landing mid-swing doesn't
+  cancel it; it just plays out, same as every other attack type here.
+- **Own timing** (`aerial_windup` 0.06s → `aerial_active_duration` 0.12s
+  → `aerial_recovery` 0.15s → `aerial_cooldown` 0.3s) — deliberately
+  short across the board, since being airborne is itself a risk and this
+  shouldn't feel sluggish to commit to.
+- **Own damage/stability** (`aerial_damage` 16, `aerial_stability_damage`
+  8) — between a combo swing's first and last hit, not equal to either,
+  so it reads as its own tool rather than a repositioned swing.
+- **Own color** (`aerial_color`, teal-green) so the debug-tint state
+  (`State.ATTACK_AERIAL`) reads as visually distinct from every other
+  attack too.
+- Still reuses the shared `Hitbox`/`SwingVisual` node (not a second
+  physical object) and the same `_position_hitbox()` helper for the
+  `aim_down` → downward-strike behavior — "own hitbox" here means its
+  own values driving that shared primitive, the same sense in which
+  Heavy Attack already has "its own" `Hitbox` usage distinct from the
+  combo's, not a second `Hitbox` node. This keeps "do not create a new
+  combat framework" intact — it's the established windup/active/
+  recovery shape every other attack in this file already uses.
+- Heavy Attack and the charged attack **keep their own pre-existing
+  `aim_down` positioning capability unchanged** — this rework only
+  redirects what the *light* attack button does specifically while
+  airborne; it doesn't touch what heavy/charged attacks do in the air.
+- Mutual exclusion extended in both directions: starting an Aerial
+  Attack checks `not is_attacking and not is_heavy_attacking`; starting
+  the charge or Heavy Attack now also checks `not is_aerial_attacking`;
+  `PlayerRangedAttack`'s guard was extended the same way.
+- Cancellable by Veyr Step via the same `cancel_attack()` every other
+  attack uses.
+
+**Placeholder values** (`PlayerCombat.gd`, all `@export`-tunable, none
+from a design brief):
+
+| Value | Default |
+|---|---|
+| `aerial_windup` | 0.06s |
+| `aerial_active_duration` | 0.12s |
+| `aerial_recovery` | 0.15s |
+| `aerial_cooldown` | 0.3s |
+| `aerial_damage` | 16 |
+| `aerial_stability_damage` | 8 |
+| `aerial_hit_offset` | 26px |
+| `aerial_down_offset` | 30px (shared with Heavy Attack/charged attack) |
+
+### Validation performed by the assistant
+
+`godot --headless --path . --import` / `--quit-after` boot checks clean
+on both `TestArena.tscn` and the vertical slice.
+
+Wrote a throwaway real-engine-loop test (not committed, deleted after)
+confirming: the Aerial Attack starts with its own `aerial_damage` (16),
+**not** the combo's 12 — the actual thing this rework needed to fix;
+`is_attacking`/`combo_index` are untouched while it plays, confirming no
+combo interference; a horizontal aerial swing (no `aim_down`) completes
+cleanly on its own timing without touching a ground-level target, the
+same known vertical-offset behavior as before, confirming this wasn't
+silently changed.
+
+For the `aim_down` downward strike against a **real enemy** (not just
+the training dummy, to also confirm stability-damage interaction), input-
+driven testing repeatedly hit real headless-testing timing artifacts —
+documented in [ARCHITECTURE.md](ARCHITECTURE.md) §9 so they're not
+re-diagnosed: a stale `is_on_floor()` reading immediately after a
+teleport (the CharacterBody2D cache isn't refreshed until the next
+`move_and_slide()`), and `aerial_cooldown` not having actually elapsed
+in real physics time between two attack attempts in the same test run
+(checking a cooldown timer that reads `0` both "never started" and
+"already cleared" is ambiguous — must also check the attack's own
+`is_*_attacking` flag). Rather than keep fighting input timing, isolated
+the actual thing at risk — the positioning/rotation/damage math — by
+calling `PlayerCombat._start_aerial_attack()` directly with `aim_down`
+forced and a controlled position, then force-activating the `Hitbox`:
+the real melee enemy's health dropped from 40 to exactly 24 (16 damage,
+exactly `aerial_damage`), confirming the geometry, rotation, and
+stability-damage wiring are all correct independent of input-timing
+noise.
+
+A **full regression pass** (real-engine-loop, not committed, deleted
+after) confirmed the combo (44 damage for a full 3-hit chain), Heavy
+Attack (32, unchanged), the charged attack (14.4 for a quick release,
+unchanged), the ranged attack (14 damage, Veyr correctly spent to 85),
+Veyr Step (engages and resolves cleanly), Perfect Step (triggers
+correctly on an engineered overlap — see §7.1's original technique), and
+HURT correctly interrupting an in-progress attack (100 → 90 health, state
+transitions to `HURT`) — **none of this regressed** from adding the
+Aerial Attack's new states and mutual-exclusion checks.
+
+**Not yet verified (needs manual play):** whether the Aerial Attack's
+damage/timing values feel right, whether "light attack while airborne is
+now a totally different move than on the ground" reads as intentional
+rather than confusing without any in-game explanation, and whether the
+`aim_down` downward-strike input feels discoverable in an actual fight
+against a moving enemy rather than a stationary or teleported one.
+
+## 15. Charged Attack
+
+The last of the three from the original ask (§13). Proposed a design
+before implementing, being deliberately careful: Heavy Attack's own
+brief (§8) explicitly said "do not create a complicated charge system,"
+so the goal here was the simplest version that still reads as a genuine
+charged attack, not a meter/tier system.
+
+**Implemented inside `PlayerCombat.gd`, alongside the combo and heavy
+attack — not a separate component**, same reasoning as heavy attack:
+it reuses the same `Hitbox`/`SwingVisual` and needs tight mutual-
+exclusion coordination with the other two:
+
+- Dedicated hold-to-charge input (`charged_attack`, **E**) — deliberately
+  **not** overloading the tap-based `attack` button, which sidesteps any
+  tap-vs-hold ambiguity with the 3-hit combo entirely rather than trying
+  to disambiguate a quick tap from a held press on the same input.
+- Holding charges for up to `charge_max_time` (1.0s default, caps there
+  — no "overcharging" past full). Releasing at any point resolves the
+  attack: damage and stability damage are linearly interpolated
+  (`lerpf`) from a minimum to a maximum based on `charge_timer /
+  charge_max_time` — one lerp, not discrete tiers or a visible meter.
+  The hitbox opens immediately on release (no further windup — charging
+  itself was the windup) and stays active for `charged_active_duration`
+  before a short recovery.
+- Payoff for committing the full charge is deliberately higher than
+  Heavy Attack's fixed values (38 damage / 45 stability at max charge vs
+  Heavy's 32/40) — Heavy Attack is instant; this asks the player to hold
+  still and stay vulnerable for up to a full second, so full commitment
+  should out-damage the instant option.
+- Gets the aerial-down variant (§14) for free — `_release_charge()`
+  calls the same `_position_hitbox()` helper the combo/heavy attack use,
+  so holding aim_down while airborne and releasing a charge strikes
+  downward exactly like the other two.
+- Mutually exclusive with the combo, heavy attack, and ranged attack in
+  all directions: charging/charged-attacking early-returns at the top of
+  `physics_update()` before the combo/heavy code paths are even reached
+  (so they can't interrupt a charge), starting a charge itself checks
+  `not is_attacking and not is_heavy_attacking`, and
+  `PlayerRangedAttack`'s own guard was extended to also check `not
+  combat.is_charging and not combat.is_charged_attacking`.
+- Cancellable by Veyr Step at any point — mid-charge (no Veyr spent,
+  no hit dealt, same "cost only committed at actual resolution" pattern
+  as the ranged attack) or mid-swing after release, via the same
+  `cancel_attack()` every other attack already uses.
+- No Veyr cost by default (`charged_consumes_veyr = false`), matching
+  Heavy Attack's exact convention — a physical technique, not a
+  Veyr-spending one, though the flag exists if that's revisited later.
+
+### Follow-up: progressive charge telegraph
+
+A follow-up requirements pass asked specifically for a "**clear**
+charge/startup indication." The original implementation already tinted
+Zayr's own debug visual via `State.CHARGING` (the same mechanism every
+other state already uses) and dimmed the `SwingVisual` while charging,
+but that was a flat dim/bright toggle, not something that visibly
+communicated *how* charged the attack was. Added a progressive telegraph
+instead: while charging, `SwingVisual`'s scale grows (0.7× → 1.5×) and
+opacity brightens (0.35 → 1.0) continuously with `charge_timer /
+charge_max_time`, and `_release_charge()` now carries the reached size
+into the strike itself (scale 1.0× → 1.6× based on the same charge
+fraction) — so a fuller charge visibly *looks* like a bigger hit, not
+just a bigger number. Every other attack-start function (`_start_swing`,
+`_start_heavy_attack`, `_start_aerial_attack`) now explicitly resets
+`swing_visual.scale` back to `Vector2.ONE`, since charging is the only
+thing that mutates it.
+
+**Spammability check (also explicitly required)**: even a near-zero-
+charge tap still commits to the full `charged_active_duration` +
+`charged_recovery` + `charged_cooldown` (0.15s + 0.3s + 0.4s ≈ 0.85s)
+before another charged attack can start — a deliberately large minimum
+commitment window regardless of how briefly it was held, on top of the
+combo/heavy/aerial/ranged attacks all being locked out for that same
+window via the shared mutual-exclusion checks.
+
+**Placeholder values** (`PlayerCombat.gd`, all `@export`-tunable, none
+from a design brief):
+
+| Value | Default |
+|---|---|
+| `charge_max_time` | 1.0s |
+| `charged_active_duration` | 0.15s |
+| `charged_recovery` | 0.3s |
+| `charged_cooldown` | 0.4s |
+| `charged_min_damage` / `charged_max_damage` | 14 / 38 |
+| `charged_min_stability` / `charged_max_stability` | 8 / 45 |
+| `charged_hit_offset` | 28px |
+| `charged_consumes_veyr` | `false` |
+
+### Validation performed by the assistant
+
+`godot --headless --path . --import` / `--quit-after` boot checks clean
+on both `TestArena.tscn` and the vertical slice. Wrote throwaway real-
+engine-loop tests (not committed, deleted after) against `TestArena.
+tscn`'s training dummy: a quick release (near-zero charge) dealt 14.4
+damage, matching the ~14 minimum; a full-duration hold (actually waiting
+out the real 1.0s, not simulated) dealt exactly 38.0 damage, the exact
+configured maximum — confirming the `lerp` scaling genuinely works
+across the full range, not just at one end; confirmed a melee tap is
+refused while charging (mutual exclusion holds); confirmed Veyr Step
+cancels a held charge with **zero** damage dealt afterward (health
+stayed at exactly 60, the dummy's full health, confirming the cancelled
+charge never resolved into a hit).
+
+**A real test-harness gotcha hit and solved along the way** (documented
+in [ARCHITECTURE.md](ARCHITECTURE.md) §9 so a future session doesn't
+re-diagnose it): testing the full sequence — quick-release, then release
+and re-press for a full-charge attempt, then mutual exclusion, then
+Veyr Step cancellation — all in one throwaway script caused the second
+press to silently fail to register as a fresh `is_action_just_pressed()`
+edge (`Input.is_action_pressed()` correctly read `true` throughout, but
+the charge stayed stuck at exactly one physics tick's accumulated time
+and `is_charging` read `false`). Root-caused by re-running the same
+full-charge scenario as an **isolated** script with a single press and
+no prior release in that run — it worked perfectly, producing the exact
+expected 38.0 damage. This is a scripted-testing artifact from
+`action_press`/`action_release` cycling within one run, not a bug in
+the actual input-handling code (which is a standard, unremarkable
+`Input.is_action_just_pressed()`/`is_action_just_released()` pattern
+that behaves correctly with real input events during real play).
+
+**Not yet verified (needs manual play):** whether holding a key for up
+to a full second feels responsive or sluggish in an actual fight,
+whether the damage curve (14 → 38) feels meaningfully rewarding across
+its range rather than "just mash it at max charge every time," and
+whether committing to a full-second hold ever feels punishing against a
+fast/aggressive enemy — exactly the kind of feel question headless
+testing can't answer.
+
+## 16. Requirements Audit (Ranged Veyr / Aerial / Charged)
+
+User provided a formal, itemized requirements list for all three
+abilities after they'd already been implemented, asking specifically
+that each be verified as met — not just "does it work," but "does it
+satisfy this list." Going through it line by line:
+
+**Ranged Veyr** — mid-range projectile ✓; complements melee rather than
+replaces it ✓ (mutual exclusion + Veyr cost + cooldown mean it can't
+substitute for melee as a primary damage loop); configurable damage/
+speed/cooldown ✓ (`damage`, `projectile_speed`, `cooldown`); interacts
+correctly with the existing Hitbox/Hurtbox architecture ✓ (reuses
+`Projectile extends Hitbox` as-is); no new combat framework ✓ (zero new
+primitives, only a new component orchestrating existing ones). No
+changes needed.
+
+**Aerial Attack** — this is where the audit found a real gap: "own
+hitbox/timing" and "feel meaningfully different from simply performing
+the ground attack in the air" were **not** met by the original
+positional-variant design (same damage/timing as the combo, just
+repositioned). Reworked into a genuinely distinct move with its own
+windup/active/recovery timing and its own damage/stability values — see
+§14's revision writeup above. Now meets both points directly. Useful
+against enemies below (aim_down) and during general vertical combat
+(default horizontal swing while airborne) ✓. Configurable ✓ (8 new
+`@export`s). Still no new combat framework — reuses the shared `Hitbox`
+and the same windup/active/recovery shape every other attack here uses.
+
+**Charged Attack** — high-commitment ✓ (up to 1s hold); significantly
+higher damage/stability than normal attacks ✓ (38/45 at max charge vs
+the combo's 12/12/20 and 6/6/8); meaningful recovery/commitment ✓
+(active+recovery+cooldown ≈ 0.85s minimum even on instant release);
+not spammable ✓ (same 0.85s minimum window, plus every other attack
+locked out for that window too); configurable charge time/damage/
+stability/recovery ✓. "Clear charge/startup indication" was upgraded
+from a flat dim/bright toggle to a progressive scale+brightness
+telegraph (§15's follow-up) specifically because "clear" reads as a
+higher bar than what the original flat toggle provided.
+
+**Cross-cutting requirements**: "do not redesign the existing combat
+system" — the combo, Heavy Attack, ranged attack's own internals, Veyr
+Step, and Perfect Step were not restructured, only extended with
+additional mutual-exclusion checks against the new states (confirmed via
+the full regression pass in §14). "Do not add abilities beyond these
+three" — nothing else was added. "Do not begin Stage 3 or modify the
+vertical slice level" — `AvarisVerticalSlice.tscn` was not opened or
+touched during this pass; every change in this audit is scoped to
+`scripts/player/`, `scripts/systems/CameraController.gd` was untouched,
+and `TestArena.tscn` (used for all testing) was not modified either,
+only used as the existing test bed. "Use the existing architecture
+wherever possible" — no new primitives were created anywhere in this
+pass; every change is either a new `@export`-tunable value on an
+existing component or a new method following the exact windup/active/
+recovery/cooldown shape already established by Heavy Attack.
+
+## 17. Veyr Regeneration
+
+Veyr was spend-only until this pass (see §4, §13) — the ranged attack
+gave the pool its first real purpose, but nothing ever refilled it
+except Perfect Step's existing refund (§7). The user asked for a
+first regeneration pass with an explicit combat-economy intent: Veyr
+should come back through *aggressive, skilled melee play*, not through
+passive waiting, so that spending it on Veyr tools (the ranged attack)
+means temporarily stepping back from the thing that refills it.
+
+```
+melee hit / Perfect Step -> gain Veyr -> spend on Veyr tools -> re-engage in melee -> gain Veyr
+```
+
+**What restores Veyr, and what deliberately does not:**
+
+| Source | Restores Veyr? | Amount |
+|---|---|---|
+| Combo hit (any of the 3 swings) that lands | Yes | `veyr_restore_normal` |
+| Heavy Attack hit that lands | Yes, more than normal | `veyr_restore_heavy` |
+| Aerial Attack hit that lands | Yes | `veyr_restore_aerial` |
+| Charged Attack hit that lands | Yes, conservative | `veyr_restore_charged` |
+| A swing that misses (hitbox never overlaps a Hurtbox) | No | — |
+| Perfect Step (existing, §7) | Yes, the largest single gain | `perfect_veyr_restore` |
+| Ranged Veyr attack hit | **No, by design** | — |
+| Taking damage (HURT state) | No | — |
+| Standing idle / waiting | No | — |
+
+Ranged Veyr never restoring is not a special-cased check — it falls out
+of the existing architecture directly. `PlayerCombat.gd`'s shared
+`Hitbox` (used by the combo, Heavy Attack, Aerial Attack, and Charged
+Attack) is the only Hitbox whose `hit_landed` signal is connected to
+`_restore_veyr_on_hit()`. `PlayerRangedAttack.gd`'s `Projectile` is a
+*separate* `Hitbox` instance (see §13) whose `hit_landed` is only ever
+connected to its own cleanup (`queue_free()` in `Projectile.gd`) — there
+is no code path from a projectile hit to `veyr.add()` at all, so a
+ranged shot landing physically cannot refund its own cost. This is what
+prevents the standing-back-and-firing-indefinitely loop the user
+explicitly flagged as the failure mode to avoid.
+
+Taking damage and idling not restoring Veyr are likewise not special
+cases — `VeyrComponent` never gained a `_process()` or any automatic
+tick, and nothing in `PlayerController.gd`'s hurt-handling
+(`_on_hit_received`/`_enter_hurt`) calls `veyr.add()`. `VeyrComponent`
+stays exactly what its docstring says: a dumb pool with `spend()`/`add()`
+and clamping, never a source of regeneration itself — every gain is
+triggered by the specific event that earned it, at the call site of
+that event, not inside the component.
+
+### Implementation
+
+All four melee restores live in `PlayerCombat.gd`'s existing
+`_on_hitbox_hit_landed()` handler (already connected to the shared
+`Hitbox.hit_landed` signal, previously used only to trigger hitstop) via
+a new `_restore_veyr_on_hit()` call, which checks which of the four
+mutually-exclusive attack-state flags (`is_attacking`,
+`is_heavy_attacking`, `is_aerial_attacking`, `is_charged_attacking`) is
+active at the moment the hit lands and calls `veyr.add()` with that
+attack's own restore amount. New `@export_group("Veyr Regeneration")`
+holds all four values. Perfect Step's restore (`PlayerVeyrStep.gd`) was
+already implemented in an earlier pass (§7) and needed no changes — it
+already calls `veyr.add(perfect_veyr_restore)` from
+`_trigger_perfect_step()`, which fires from the real
+`Hurtbox.hit_avoided` signal, the same primitive every other
+invulnerability-interaction in this project uses.
+
+`veyr.add()` (`VeyrComponent.gd`) already clamped to `max_veyr` before
+this pass (`current_veyr = minf(current_veyr + amount, max_veyr)`), so
+the "Veyr cannot exceed its maximum" requirement needed no new code —
+just verification.
+
+### Placeholder tuning values
+
+Not from a design brief — placeholder, tunable, deliberately
+conservative per the user's explicit instruction.
+
+| Value | Default | Notes |
+|---|---|---|
+| `veyr_restore_normal` (`PlayerCombat.gd`) | 4.0 | Baseline the other three are set relative to |
+| `veyr_restore_heavy` (`PlayerCombat.gd`) | 7.0 | Slightly more than normal, per the brief's "heavy attacks restore slightly more" |
+| `veyr_restore_aerial` (`PlayerCombat.gd`) | 5.0 | Between normal and heavy — its own risk (airborne commitment), no heavy-style startup |
+| `veyr_restore_charged` (`PlayerCombat.gd`) | 6.0 | Flat regardless of charge level — deliberately not scaled like damage/stability, so a longer charge isn't also a bigger Veyr farm |
+| `perfect_veyr_restore` (`PlayerVeyrStep.gd`, pre-existing) | 15.0 | Unchanged — already the largest single gain in the kit, satisfying "particularly rewarding" without needing a numeric change |
+
+For scale: the ranged attack costs 15 Veyr, Heavy Attack and Charged
+Attack cost 20 each when `*_consumes_veyr` is enabled (both off by
+default). A Perfect Step alone refunds a full ranged shot; several
+landed melee hits are needed to do the same, by design — melee is the
+steady drip, Perfect Step is the reward for precision.
+
+### Explicitly not built (per the user's instructions)
+
+- No consumable mana potions.
+- No Veyr pickups from enemies.
+- No passive/rapid regeneration (`VeyrComponent` still has no `_process`
+  or timer of any kind).
+- No resource-combo multipliers (each restore is a flat, independent
+  `veyr.add()` call — no streak/combo tracking).
+- No new UI (the existing Veyr bar, driven by `veyr_changed`, already
+  reflects every gain here with no changes needed).
+
+### Validation performed by the assistant
+
+Headless-validated through the real engine loop (`TestArena.tscn`),
+exercising the actual `Hitbox.activate()` → `area_entered` →
+`Hurtbox.receive_hit()` → `hit_landed` signal chain for every melee
+case (not a bypassed/mocked signal) — attacks were triggered via direct
+method calls (`_start_swing()`, `_start_heavy_attack()`,
+`_start_aerial_attack()`, `_start_charge()`/`_release_charge()`) to
+avoid the project's known input-timing test flakiness (see
+[ARCHITECTURE.md](ARCHITECTURE.md) §9), but the hit detection and Veyr
+gain themselves ran through the unmodified real signal path:
+
+- Normal combo hit restored exactly `veyr_restore_normal`; a swing
+  aimed where it could not connect restored nothing (and dealt no
+  damage, confirming it was a genuine miss, not a suppressed hit).
+- Heavy Attack hit restored exactly `veyr_restore_heavy`, confirmed
+  greater than the normal restore.
+- Aerial Attack hit restored exactly `veyr_restore_aerial`.
+- Charged Attack hit (full charge) restored exactly
+  `veyr_restore_charged`.
+- Ranged Veyr attack: confirmed the cost (15) was spent at fire, then
+  confirmed the projectile went on to actually land a hit (dummy health
+  dropped by the configured ranged damage) with Veyr unchanged from its
+  post-fire value — proving the "no restore" case was tested against a
+  real landed hit, not a shot that simply missed.
+- Perfect Step: engineered the same real-overlap scenario used in prior
+  passes (position Zayr at a live enemy attack's Hitbox location,
+  force the stepping/invulnerability state, let the real enemy Hitbox
+  activate and overlap) and confirmed `hit_avoided` fired and restored
+  exactly `perfect_veyr_restore`, confirmed greater than every melee
+  restore amount.
+- Taking damage: confirmed Veyr is unchanged after a HURT-state hit.
+- Max clamp: set Veyr to 98 (2 below max) and landed a 7-restore Heavy
+  Attack hit — confirmed it clamped to exactly 100, not 105.
+- Light regression: re-confirmed the combo's first-swing damage, and
+  ran Veyr Step through a real (non-engineered) step via its own
+  `physics_update()` parameters directly (bypassing simulated `Input`
+  entirely, sidestepping the project's known just-pressed-in-a-loop
+  flakiness) to confirm it still engages and resolves cleanly with the
+  new hit-landed handler in place.
+
+One test-harness bug found and fixed during this pass, not a game bug:
+the throwaway script's own `SceneTree.current_scene` was never set
+after manually instantiating `TestArena.tscn`, so
+`PlayerRangedAttack._fire()`'s `body.get_tree().current_scene.add_child(proj)`
+call failed (`current_scene` was null) and the ranged-attack test's
+projectile silently never spawned. Fixed by setting
+`current_scene = arena` right after adding the arena to the tree root;
+not worth a new ARCHITECTURE.md bullet since it's specific to
+hand-built test scripts that skip normal scene loading, not a general
+testing-methodology gotcha like the ones already documented there.
+
+**Not yet verified (needs manual play):** whether these regeneration
+amounts feel right in an actual fight — whether melee-only Veyr income
+feels rewarding rather than stingy, whether the gap between a ranged
+attack's cost and a single melee hit's refund feels like a fair
+trade-off, and whether Perfect Step's refund feels like the standout
+"mastery" reward it's meant to be relative to everything else here.
+
+## 18. Behavioral Clarification: EnemyAI Detection Ignores Elevation
+
+Found while enhancing the vertical slice's Stage 3 Veyr Step encounter
+with real verticality (a raised platform) for the first time in this
+project - not a new bug introduced by that pass, a pre-existing trait
+of `EnemyAI.gd` that no prior encounter's geometry ever exposed.
+
+`EnemyAI.physics_update()`'s detection and attack-range checks
+(`to_player_dist`) are computed from **X distance only** - Y is never
+considered. On flat, single-elevation encounters (every one built
+before Stage 3) this is invisible: everything is always at the same
+height anyway. Once a player can escape **vertically** (a jump, or
+Veyr Step) to a spot that's still X-close but now Y-unreachable, an
+enemy still considers the player "in range" and will still chase/wind
+up/attack based on X alone - it doesn't know it can no longer actually
+land the hit.
+
+Consequence observed in testing: luring two melee enemies toward the
+same spot and then escaping straight up leaves both still "locked on"
+to the player's X position, standing close enough to each other that
+their own attacks - aimed at an X position they can't vertically
+reach - land on **each other** instead, since `Hitbox` has no
+same-faction/team exclusion (see `Hitbox.gd` §"Intended Implementation
+Primitives" - it only ever excludes hits against its own `owner_body`).
+Confirmed via a real-engine test: two flankers reduced to 32/40 and
+6/40 health purely from this, with the player never involved and never
+at risk (Veyr Step itself always landed safely; this is not a Veyr
+Step or destination-safety issue).
+
+**Not fixed.** This is a general trait of the shared `EnemyAI`/`Hitbox`
+architecture, not something scoped to the Stage 3 pass that found it,
+and changing detection logic or adding faction exclusion is out of
+scope for a Stage 3 encounter addition. Recorded here so a future pass
+that touches enemy AI or adds more vertical encounters has the context:
+if this ever needs fixing, the two independent options are (a) make
+`EnemyAI`'s detection/attack-range checks 2D distance instead of X-only,
+or (b) give `Hitbox` a faction/owner-type exclusion so allied hits never
+land regardless of position. Neither was attempted here.
+
+## 19. Behavioral Clarification: Projectile Has No Vertical Aim
+
+Found while first attempting to elevate Stage 5's ranged sentry onto a
+small platform, as a way to give the ranged encounter "modest
+verticality." Related to §18's finding but distinct: this one is about
+`Projectile` itself, not `EnemyAI`'s detection.
+
+`Projectile.gd`/`RangedEnemyAI.gd`/`BossAI._fire_projectile()` all fire
+a shot that travels **perfectly horizontally** at a fixed Y equal to the
+firer's own `muzzle_offset.y` - there is no vertical aim component at
+all (`direction` is a `float`, `-1.0` or `1.0`, not a `Vector2`). This
+was already true and correct for every previous ranged encounter,
+because every ranged enemy so far has stood at the same height as the
+player it's shooting at.
+
+The first attempt to put `RangedSentry` up on a small perch broke this
+silently and completely: once the shooter's muzzle height no longer
+matches a grounded player's ~46px-tall standing collision range, the
+shot flies over their head at **every distance**, not just up close -
+it doesn't arc or angle, so there is no range at which it would ever
+connect. Caught immediately by a real-engine test (the sentry's own
+"can it hit an exposed player" check started failing), not shipped.
+
+**Not fixed at the primitive level** - `Projectile` staying horizontal-
+only is a deliberate, load-bearing simplification from when the ranged
+attack was first built (see §13: "not worth the risk" of touching a
+primitive every ranged enemy and the player's own Ranged Veyr all
+share). Fixed instead by reverting the sentry to ground level and
+moving the "modest verticality" piece of Stage 5's design to a
+player-usable platform instead (`SentryPerch`, repositioned away from
+the sentry) - verticality for the player to use, not for an enemy to
+stand on. If a future encounter genuinely needs an elevated shooter
+that can still hit a grounded player, the fix would be giving
+`Projectile` a real `Vector2` direction (and updating every call site
+that currently passes a `float`) - not attempted here, out of scope for
+a Stage 5 content pass.

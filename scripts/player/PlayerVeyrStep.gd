@@ -22,21 +22,30 @@ class_name PlayerVeyrStep
 ## have hit Zayr's own Hurtbox during the invulnerability window (that's
 ## what Hurtbox.hit_avoided means - detected via the existing Hitbox/
 ## Hurtbox overlap system, not a separate check), reward the precisely-
-## timed evade with a stronger burst, a brief hitstop, a small Veyr
-## refund, and an optional audio cue. Does not teleport again, does not
-## attack, does not extend invulnerability, and needs no separate input -
-## it's purely a reactive bonus layered onto a normal step.
+## timed evade with a stronger burst, a brief hitstop, a meaningful Veyr
+## refund (deliberately the largest single Veyr gain in the kit - see
+## PlayerCombat.gd's smaller per-hit melee restores - since Perfect Step
+## represents mastery of Zayr's Veyr manipulation, per docs/COMBAT.md's
+## combat economy), and an optional audio cue. Does not teleport again,
+## does not attack, does not extend invulnerability, and needs no
+## separate input - it's purely a reactive bonus layered onto a normal
+## step.
 
 @onready var body: CharacterBody2D = get_parent()
 @onready var movement: PlayerMovement = get_parent().get_node("Movement")
 @onready var combat: PlayerCombat = get_parent().get_node("Combat")
+@onready var ranged_attack: PlayerRangedAttack = get_parent().get_node("RangedAttack")
 @onready var health: HealthComponent = get_parent().get_node("HealthComponent")
 @onready var hurtbox: Hurtbox = get_parent().get_node("Hurtbox")
 @onready var veyr: VeyrComponent = get_parent().get_node("VeyrComponent")
-@onready var visual: Polygon2D = get_parent().get_node("Visual")
+## Hides the whole production VisualRoot (not the debug rectangle - see
+## PlayerController.show_debug_visual) for the step's duration.
+@onready var visual: Node2D = get_parent().get_node("VisualRoot")
 @onready var trail: Line2D = get_parent().get_node("TrailLine")
 @onready var depart_burst: Polygon2D = get_parent().get_node("DepartBurst")
 @onready var arrive_burst: Polygon2D = get_parent().get_node("ArriveBurst")
+@onready var depart_particles: GPUParticles2D = get_parent().get_node("DepartParticles")
+@onready var arrive_particles: GPUParticles2D = get_parent().get_node("ArriveParticles")
 @onready var audio_player: AudioStreamPlayer = $AudioPlayer
 
 @export_group("Veyr Step")
@@ -49,7 +58,10 @@ class_name PlayerVeyrStep
 @export var step_duration: float = 0.1
 ## Recovery before Veyr Step can be used again.
 @export var step_cooldown: float = 0.55
-@export var trail_color: Color = Color(0.55, 0.4, 1.0)
+## Boosted above 1.0 so it actually catches the vertical slice's
+## WorldEnvironment glow (see docs/PROGRESS.md art pass) - values >1.0
+## are valid HDR overshoot for 2D CanvasItem colors, not a mistake.
+@export var trail_color: Color = Color(0.72, 0.53, 1.3)
 @export var trail_width: float = 4.0
 ## The departure burst shrinks from this scale to burst_end_scale (a
 ## "shatter"); the arrival burst grows from burst_end_scale to this scale
@@ -136,6 +148,7 @@ func _do_step(aim_x: float, aim_y: float) -> void:
 
 	movement.cancel_dash()
 	combat.cancel_attack()
+	ranged_attack.cancel_attack()
 
 	is_stepping = true
 	_step_timer = step_duration
@@ -160,6 +173,14 @@ func _do_step(aim_x: float, aim_y: float) -> void:
 	arrive_burst.scale = Vector2.ONE * burst_end_scale
 	arrive_burst.modulate.a = 1.0
 	arrive_burst.visible = true
+
+	# Complementary particle bursts alongside the existing polygon shapes -
+	# additive, not a replacement, so the tested scale/alpha tween logic
+	# above is untouched (see docs/PROGRESS.md art pass Stage D).
+	depart_particles.global_position = start_pos
+	depart_particles.restart()
+	arrive_particles.global_position = body.global_position
+	arrive_particles.restart()
 
 
 func _end_step() -> void:

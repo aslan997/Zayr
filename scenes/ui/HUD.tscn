@@ -4,6 +4,7 @@
 [ext_resource type="PackedScene" path="res://scenes/ui/ResourceBar.tscn" id="2_bar"]
 
 [node name="HUD" type="CanvasLayer"]
+layer = 2
 script = ExtResource("1_hud")
 
 [node name="HealthBar" parent="." instance=ExtResource("2_bar")]
@@ -12,7 +13,7 @@ fill_color = Color(0.85, 0.25, 0.25, 1)
 
 [node name="VeyrBar" parent="." instance=ExtResource("2_bar")]
 position = Vector2(16, 40)
-fill_color = Color(0.4, 0.6, 1, 1)
+fill_color = Color(0.55, 0.4, 1.0, 1)
 
 [node name="BossBar" parent="." instance=ExtResource("2_bar")]
 position = Vector2(396, 16)
